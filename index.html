@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Armand Comas Massagué</title>
+<meta name="description" content="Armand Comas Massagué — Research Scientist at Google XR (Syntec). Leveraging multi-modal generative models for synthesizing the world in 3D.">
+<meta property="og:title" content="Armand Comas Massagué">
+<meta property="og:description" content="Research Scientist at Google XR (Syntec) — leveraging multi-modal generative models for synthesizing the world in 3D.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#f1efe9">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23f1efe9'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' dominant-baseline='middle' font-family='Georgia,serif' font-style='italic' font-size='52' fill='%23121212'%3Ea%3C/text%3E%3Ccircle cx='50' cy='48' r='5' fill='%23ff4a1c'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f1efe9;
+    --ink: #121212;
+    --mute: #8b877d;
+    --hair: #d8d4ca;
+    --signal: #ff4a1c;
+    --serif: "Instrument Serif", "Times New Roman", serif;
+    --mono: "Geist Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --sans: "Inter", system-ui, sans-serif;
+    --gutter: clamp(20px, 4vw, 56px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #0e0e0d; --ink: #ecebe6; --mute: #77736a; --hair: #2a2926; }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font: 400 15px/1.55 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--signal); color: var(--paper); }
+  .mono { font-family: var(--mono); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
+  .mute { color: var(--mute); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  /* ---------- HUD ---------- */
+  .hud { position: fixed; inset: 0 0 auto 0; z-index: 20; display: flex; justify-content: space-between;
+         padding: 18px var(--gutter); pointer-events: none; mix-blend-mode: difference; color: #f1efe9; }
+  .hud a { pointer-events: auto; }
+  .hud nav { display: flex; gap: 22px; }
+  .hud nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+  /* ---------- HERO ---------- */
+  .hero { position: relative; display: grid; grid-template-rows: auto auto; padding-top: 56px; }
+  #field { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; }
+  .hero-canvas { position: relative; height: 240px; } /* real height set by heroLayout() */
+  .readout { margin-top: 18px; line-height: 1.7; opacity: .8; }
+  .readout b { font-weight: 500; color: var(--ink); }
+  .hero-foot { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; padding: 28px var(--gutter) 40px;
+               border-top: 1px solid var(--hair); align-items: start; }
+  .hero-foot .id-card { grid-column: 1 / span 4; display: flex; align-items: flex-start; gap: 18px; }
+  .hero-foot .portrait { position: relative; flex: 0 0 clamp(92px, 8vw, 114px); width: clamp(92px, 8vw, 114px);
+                         border: 1px solid var(--hair); padding: 4px; background: var(--paper); overflow: hidden; }
+  .hero-foot .portrait img { display: block; width: 100%; height: auto; aspect-ratio: 5 / 7; object-fit: cover;
+                             filter: contrast(1.02); user-select: none; }
+  .hero-foot .portrait canvas { position: absolute; inset: 4px; width: calc(100% - 8px); height: calc(100% - 8px);
+                                display: block; cursor: crosshair; }
+  .hero-foot .meta { line-height: 1.95; padding-top: 2px; }
+  .hero-foot .bio { grid-column: 5 / span 8; font: 400 clamp(22px, 2.3vw, 32px)/1.22 var(--serif); letter-spacing: -.005em; }
+  .bio em { font-style: italic; }
+  .bio a { border-bottom: 1px solid var(--hair); transition: border-color .2s; }
+  .bio a:hover { border-color: var(--signal); }
+
+  /* ---------- SECTIONS ---------- */
+  section.block { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; padding: 96px var(--gutter) 0; }
+  .label { grid-column: 1 / span 3; position: sticky; top: 64px; align-self: start; }
+  .label .num { display: block; font: italic 400 64px/1 var(--serif); color: var(--ink); margin-bottom: 10px; }
+  .content { grid-column: 4 / span 9; }
+
+  /* filters */
+  .filters { display: flex; flex-wrap: wrap; gap: 6px 22px; padding-bottom: 18px; border-bottom: 1px solid var(--ink); }
+  .filters button { all: unset; cursor: pointer; font: 500 11px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase;
+                    color: var(--mute); padding: 6px 0; position: relative; }
+  .filters button sup { font-size: 9px; margin-left: 3px; }
+  .filters button[aria-pressed="true"] { color: var(--ink); }
+  .filters button[aria-pressed="true"]::before { content: ""; position: absolute; left: -11px; top: 9px; width: 5px; height: 5px;
+                    border-radius: 50%; background: var(--signal); }
+  .filters button:focus-visible { outline: 1px dashed var(--signal); outline-offset: 4px; }
+
+  /* index rows */
+  .row { border-bottom: 1px solid var(--hair); transition: opacity .35s; }
+  .row.hide { display: none; }
+  .row-head { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; align-items: center;
+              grid-template-columns: 44px 152px 1fr minmax(110px, 190px) 26px; gap: 18px; padding: 16px 0; }
+  .row-head:focus-visible { outline: 1px dashed var(--signal); outline-offset: 2px; }
+  .row .yr, .row .venue, .row .pc { font: 400 11px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--mute); }
+  .row .venue { text-align: right; line-height: 1.4; color: var(--ink); }
+  .row .pc { text-align: right; }
+  .row .thumb { width: 152px; aspect-ratio: 2 / 1; border: 1px solid var(--hair); background: #fff;
+                overflow: hidden; display: block; flex-shrink: 0; transition: border-color .25s, transform .35s cubic-bezier(.2,.7,.2,1); }
+  .row .thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .row-head:hover .thumb, .row.open .thumb { border-color: var(--ink); transform: scale(1.02); }
+  .row .t { font: 400 clamp(20px, 2.2vw, 31px)/1.12 var(--serif); letter-spacing: -.01em; transition: transform .35s cubic-bezier(.2,.7,.2,1); }
+  .row-head:hover .t, .row.open .t { font-style: italic; transform: translateX(6px); }
+  .body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s cubic-bezier(.2,.7,.2,1); }
+  .row.open .body { grid-template-rows: 1fr; }
+  .body > div { overflow: hidden; }
+  .body-in { display: grid; grid-template-columns: 44px 152px 1fr minmax(110px, 190px) 26px; gap: 18px; padding: 4px 0 28px; }
+  .body-in .txt { grid-column: 3; max-width: 62ch; }
+  .body-in .blurb { font-size: 16px; margin-bottom: 14px; }
+  .fig { margin: 4px 0 18px; border: 1px solid var(--hair); background: #fff; }
+  .fig img { display: block; width: 100%; height: auto; mix-blend-mode: multiply; }
+  .body-in .authors { font: 400 12px/1.6 var(--mono); color: var(--mute); margin-bottom: 14px; }
+  .body-in .authors .me { color: var(--ink); text-decoration: underline; text-decoration-color: var(--signal); text-underline-offset: 3px; }
+  .links { display: flex; gap: 18px; flex-wrap: wrap; }
+  .links a { font: 500 11px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase; padding-bottom: 3px; border-bottom: 1px solid var(--ink); }
+  .links a:hover { color: var(--signal); border-color: var(--signal); }
+  .links .na { font: 400 11px/1 var(--mono); color: var(--mute); text-transform: uppercase; }
+
+  /* figure plate following cursor (disabled in favor of inline row thumbnails) */
+  .plate { display: none; }
+  .tch { display: none; }
+  @media (hover: none) { .plate, .hov { display: none; } .tch { display: inline; } }
+
+  /* now / news */
+  .now li { list-style: none; display: grid; grid-template-columns: 110px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--hair); }
+  .now li:first-child { border-top: 1px solid var(--ink); }
+  .now .d { font: 400 11px/1.9 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--mute); }
+  .now .e { font: 400 21px/1.3 var(--serif); }
+  .now .e i { font-style: italic; }
+  .now .e a, .path .w small a { color: var(--ink); border-bottom: 1px solid var(--hair); transition: border-color .2s, color .2s; }
+  .now .e a:hover, .path .w small a:hover { color: var(--signal); border-color: var(--signal); }
+
+  /* path / experience */
+  .path { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; border-top: 1px solid var(--ink); }
+  .path div { padding: 16px 0; border-bottom: 1px solid var(--hair); display: grid; grid-template-columns: 96px 1fr; gap: 12px; }
+  .path .d { font: 400 11px/1.9 var(--mono); color: var(--mute); letter-spacing: .04em; }
+  .path .w { font-size: 15px; }
+  .path .w small { display: block; color: var(--mute); font-size: 13px; }
+
+  /* footer */
+  footer { padding: 140px var(--gutter) 28px; }
+  .hello { display: block; font: 400 clamp(56px, 11vw, 168px)/.9 var(--serif); letter-spacing: -.03em; }
+  .hello i { color: var(--signal); }
+  .hello:hover i { font-style: normal; }
+  .foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-top: 60px; padding-top: 16px; border-top: 1px solid var(--hair); }
+  .foot nav { display: flex; gap: 22px; }
+  .foot a:hover { color: var(--signal); }
+
+  @media (max-width: 860px) {
+    .hero-foot .id-card, .hero-foot .bio, .label, .content { grid-column: 1 / -1; }
+    .label { position: static; }
+    .label .num { font-size: 44px; }
+    .row-head { grid-template-columns: 108px 1fr; align-items: start; }
+    .row .yr { display: none; }
+    .row .thumb { width: 108px; grid-row: 1 / span 2; }
+    .row .venue { grid-column: 2; text-align: left; }
+    .row .pc { display: none; }
+    .body-in { grid-template-columns: 1fr; }
+    .body-in .txt { grid-column: 1; }
+    .path { grid-template-columns: 1fr; }
+    .hud nav { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hud mono">
+  <a href="#top">A. Comas Massagué</a>
+  <nav><a href="#work">Work</a><a href="#now">Now</a><a href="#path">Path</a><a href="#hello">Contact</a></nav>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="hero-canvas">
+      <h1 class="sr">Armand Comas Massagué</h1>
+      <canvas id="field" aria-hidden="true"></canvas>
+    </div>
+    <div class="hero-foot">
+      <div class="id-card">
+        <figure class="portrait" id="portrait-fig" title="Move cursor or click to re-sample">
+          <img id="portrait-img" src="portrait.jpg" alt="Armand Comas Massagué" width="280" height="393">
+          <canvas id="portrait-c" aria-hidden="true"></canvas>
+        </figure>
+        <div class="meta mono mute">
+          Research Scientist<br>
+          Google XR<br>
+          PhD · Northeastern<br>
+          <span style="color:var(--ink)">● </span>Generating in 3D
+          <div class="readout" aria-hidden="true">
+            <div>masked <b id="ro-m">—</b> / <span id="ro-n">—</span></div>
+            <div>t = <b id="ro-t">1.000</b> · <span class="hov">move cursor to re-noise</span><span class="tch">tap to re-noise</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="bio">
+        At Google XR, on the Syntec team, I work on leveraging multi-modal generative models to synthesize the world in 3D.
+        Before that, I studied the structure underneath generation: how to interpret, manipulate, and compose representations for greater
+        control of the generative process, during my <a href="https://search.proquest.com/openview/d89381ffeb1ebf77b77cba2af181a40e/1?pq-origsite=gscholar&amp;cbl=18750&amp;diss=y" target="_blank" rel="noopener">PhD</a>
+        with <a href="https://coe.northeastern.edu/faculty/octavia-camps/" target="_blank" rel="noopener">Octavia Camps</a> at Northeastern University's Robust Systems Lab.
+        Along the way, I collaborated with Google XR, Adobe (Project Indigo, with <a href="https://profiles.stanford.edu/marc-levoy" target="_blank" rel="noopener">Mark Levoy</a>),
+        Netflix, MERL, and MIT (with <a href="https://yilundu.github.io/" target="_blank" rel="noopener">Yilun Du</a> and
+        <a href="https://executive.mit.edu/faculty/joshua-tenenbaum-0036g00000ra8RsAAI.html" target="_blank" rel="noopener">Joshua Tenenbaum</a>),
+        with a research stay at UPenn (with <a href="https://www.grasp.upenn.edu/people/rene-vidal/" target="_blank" rel="noopener">René Vidal</a>).
+      </p>
+    </div>
+  </section>
+
+  <section class="block" id="work">
+    <div class="label"><span class="num">i.</span><span class="mono mute">Selected work</span></div>
+    <div class="content">
+      <div class="filters" role="group" aria-label="Filter by research area" id="filters"></div>
+      <div id="index"></div>
+    </div>
+  </section>
+
+  <section class="block" id="now">
+    <div class="label"><span class="num">ii.</span><span class="mono mute">Now<br>Google XR · Syntec</span></div>
+    <div class="content"><ul class="now" id="news"></ul></div>
+  </section>
+
+  <section class="block" id="path">
+    <div class="label"><span class="num">iii.</span><span class="mono mute">Path<br>industry · academia</span></div>
+    <div class="content"><div class="path" id="cv"></div>
+      <p class="mono mute" style="margin-top:22px;line-height:1.9">Mentored 4 M.Sc. theses and 5 incoming Ph.D. students · Northeastern Dean's Fellowship · Catalan, Spanish, English</p>
+    </div>
+  </section>
+</main>
+
+<footer id="hello">
+  <a class="hello" id="mail" href="#">Say <i>hello</i> —</a>
+  <div class="foot mono mute">
+    <nav id="links"></nav>
+    <span>Hero sampled live by a masked-diffusion toy · zero dependencies · © 2026</span>
+  </div>
+</footer>
+
+<div class="plate" id="plate" aria-hidden="true"><canvas id="plate-c"></canvas><div class="cap mono"><span id="plate-l"></span><span class="mute" id="plate-v"></span></div></div>
+
+<script src="content.js?v=19"></script>
+<script>
+/* ============================== GLYPH FIELD ==============================
+   A tiny masked-diffusion sampler: every cell starts masked (noise glyph),
+   then commits to its target glyph in order of "confidence". Hovering
+   re-masks cells, which then self-correct back. */
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const NOISE = "01<>/\\|+-=*#%&$@ABCDEFGHJKMNPQRSTUVWXYZ";
+const RAMP = " .:-=+*%#@";
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+class GlyphField {
+  constructor(canvas, { fs = 11, duration = 2200, onStats = null } = {}) {
+    this.c = canvas; this.ctx = canvas.getContext("2d");
+    this.fs = fs; this.duration = duration; this.onStats = onStats;
+    this.targetFn = null; this.running = false; this.visible = true;
+    this.tick = this.tick.bind(this);
+  }
+  layout() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const r = this.c.getBoundingClientRect();
+    this.w = r.width; this.h = r.height;
+    this.c.width = Math.round(r.width * dpr); this.c.height = Math.round(r.height * dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.cw = this.fs * 0.62; this.ch = this.fs * 1.18;
+    this.cols = Math.max(1, Math.floor(this.w / this.cw));
+    this.rows = Math.max(1, Math.floor(this.h / this.ch));
+    this.ox = (this.w - this.cols * this.cw) / 2; this.oy = (this.h - this.rows * this.ch) / 2;
+    const n = this.cols * this.rows;
+    this.L = new Float32Array(n); this.at = new Float64Array(n);
+    this.glyph = new Array(n).fill(" "); this.flash = new Float64Array(n);
+    this.buildTarget();
+  }
+  buildTarget() {
+    if (!this.targetFn) return;
+    const SS = 4;                                 // supersample, then box-filter per cell
+    const off = document.createElement("canvas");
+    off.width = this.cols * SS; off.height = this.rows * SS;
+    const g = off.getContext("2d", { willReadFrequently: true });
+    const aspect = this.ch / this.cw;            // cells are taller than wide
+    g.fillStyle = "#000"; g.fillRect(0, 0, off.width, off.height);
+    g.save(); g.scale(SS, SS / aspect); g.fillStyle = "#fff"; g.strokeStyle = "#fff";
+    this.targetFn(g, this.cols, this.rows * aspect);
+    g.restore();
+    const d = g.getImageData(0, 0, off.width, off.height).data, rowPx = off.width * 4;
+    for (let cy = 0; cy < this.rows; cy++) for (let cx = 0; cx < this.cols; cx++) {
+      let s = 0;
+      for (let y = 0; y < SS; y++) for (let x = 0; x < SS; x++) s += d[(cy * SS + y) * rowPx + (cx * SS + x) * 4];
+      this.L[cy * this.cols + cx] = Math.pow(s / (SS * SS * 255), 0.75);
+    }
+    // auto-levels so low-contrast figures still produce a readable glyph image
+    let mx = 0; for (const v of this.L) if (v > mx) mx = v;
+    if (mx > 0 && mx < 1) for (let i = 0; i < this.L.length; i++) this.L[i] /= mx;
+  }
+  setTarget(fn) { this.targetFn = fn; this.buildTarget(); this.remaskAll(); }
+  remaskAll() {
+    if (!this.L) return;
+    const now = performance.now();
+    for (let i = 0; i < this.L.length; i++) {
+      // ink cells are "more confident" and commit first; background clears last
+      const conf = this.L[i] > 0.15 ? 0.55 + 0.45 * Math.random() : 0.35 * Math.random();
+      this.at[i] = REDUCED ? 0 : now + (1 - conf) * this.duration;
+    }
+    this.start();
+  }
+  remaskAround(px, py, radius = 7) {
+    if (!this.L) return;
+    const cx = (px - this.ox) / this.cw, cy = (py - this.oy) / this.ch, now = performance.now();
+    const r2 = radius * radius;
+    for (let y = Math.max(0, Math.floor(cy - radius)); y < Math.min(this.rows, cy + radius); y++)
+      for (let x = Math.max(0, Math.floor(cx - radius * 1.8)); x < Math.min(this.cols, cx + radius * 1.8); x++) {
+        const dx = (x - cx) / 1.8, dy = y - cy, d2 = dx * dx + dy * dy;
+        if (d2 > r2) continue;
+        const i = y * this.cols + x;
+        this.at[i] = Math.max(this.at[i], now + 250 + Math.sqrt(d2) * 60 + Math.random() * 650);
+      }
+    this.start();
+  }
+  start() { if (this.L && !this.running && this.visible) { this.running = true; requestAnimationFrame(this.tick); } }
+  tick(now) {
+    const { ctx, cols, rows, cw, ch, ox, oy } = this;
+    ctx.clearRect(0, 0, this.w, this.h);
+    ctx.font = `400 ${this.fs}px "Geist Mono", ui-monospace, monospace`;
+    ctx.textBaseline = "top";
+    const ink = css("--ink"), mute = css("--mute"), sig = css("--signal");
+    let masked = 0; const flashes = [];
+    // pass 1: committed glyphs
+    ctx.fillStyle = ink;
+    for (let i = 0; i < this.L.length; i++) {
+      const x = ox + (i % cols) * cw, y = oy + ((i / cols) | 0) * ch;
+      if (now < this.at[i]) {
+        masked++;
+        if (this.glyph[i] === " " || Math.random() < 0.12) this.glyph[i] = NOISE[(Math.random() * NOISE.length) | 0];
+        this.flash[i] = 1;
+        continue;
+      }
+      if (this.flash[i] === 1) { this.flash[i] = now; }
+      const v = this.L[i] < 0.28 ? 0 : 0.35 + 0.65 * this.L[i];
+      const ch_ = RAMP[Math.min(RAMP.length - 1, Math.round(v * (RAMP.length - 1)))];
+      if (ch_ === " ") continue;
+      if (now - this.flash[i] < 180) { flashes.push(i, ch_); continue; }
+      ctx.fillText(ch_, x, y);
+    }
+    // pass 2: masked noise. Noise inside the letterforms stays dark and the
+    // background noise stays sparse and faint, so the name reads even at t = 1.
+    ctx.fillStyle = mute; ctx.globalAlpha = 0.22;
+    for (let i = 0; i < this.L.length; i++) if (now < this.at[i] && this.L[i] <= 0.15 && (i * 2654435761 >>> 0) % 100 < 40)
+      ctx.fillText(this.glyph[i], ox + (i % cols) * cw, oy + ((i / cols) | 0) * ch);
+    ctx.fillStyle = ink; ctx.globalAlpha = 0.6;
+    for (let i = 0; i < this.L.length; i++) if (now < this.at[i] && this.L[i] > 0.15)
+      ctx.fillText(this.glyph[i], ox + (i % cols) * cw, oy + ((i / cols) | 0) * ch);
+    ctx.globalAlpha = 1;
+    // pass 3: just-committed cells flash in signal colour
+    ctx.fillStyle = sig;
+    for (let k = 0; k < flashes.length; k += 2) {
+      const i = flashes[k];
+      ctx.fillText(flashes[k + 1], ox + (i % cols) * cw, oy + ((i / cols) | 0) * ch);
+    }
+    if (this.onStats) this.onStats(masked, this.L.length);
+    if ((masked > 0 || flashes.length) && this.visible) requestAnimationFrame(this.tick);
+    else this.running = false;
+  }
+}
+
+/* text target helper: draws `lines` fitted into the grid (units = cell widths) */
+function textTarget(lines, { align = "left", pad = 0.04, lh = 0.92, italic = false, scale = 1, sy = 1 } = {}) {
+  return (g, W, H) => {
+    const font = (s) => `${italic ? "italic " : ""}400 ${s}px "Instrument Serif", serif`;
+    g.font = font(100);
+    const widest = Math.max(...lines.map((l) => g.measureText(l).width));
+    const Hs = H / sy;
+    let s = scale * Math.min((W * (1 - 2 * pad)) / widest * 100, (Hs * (1 - 2 * pad)) / (lines.length * lh));
+    g.save();
+    g.scale(1, sy);
+    g.font = font(s); g.textBaseline = "alphabetic"; g.textAlign = align;
+    const blockH = lines.length * s * lh;
+    const x = align === "left" ? W * pad : W / 2;
+    let y = (Hs - blockH) / 2 + s * 0.78;
+    for (const l of lines) { g.lineWidth = s * 0.018; g.strokeText(l, x, y); g.fillText(l, x, y); y += s * lh; }
+    g.restore();
+  };
+}
+
+/* image target: luminance of a figure, letterboxed into the grid, inverted so
+   dark ink on white paper figures maps to dense glyphs */
+function imageTarget(img) {
+  return (g, W, H) => {
+    const r = Math.min(W / img.naturalWidth, H / img.naturalHeight) * 0.94;
+    const w = img.naturalWidth * r, h = img.naturalHeight * r;
+    g.filter = "grayscale(1) invert(1) contrast(2)";
+    g.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+    g.filter = "none";
+  };
+}
+/* preload any figures declared in content.js (WORKS[i].fig = "figs/<id>.png") */
+const FIGS = Object.fromEntries(WORKS.filter((w) => w.fig).map((w) => { const im = new Image(); im.src = w.fig; return [w.id, im]; }));
+
+/* ============================== HERO ============================== */
+const field = new GlyphField(document.getElementById("field"), {
+  fs: innerWidth < 700 ? 6 : 7,
+  duration: 2600,
+  onStats: (m, n) => {
+    document.getElementById("ro-m").textContent = m.toLocaleString();
+    document.getElementById("ro-n").textContent = n.toLocaleString();
+    document.getElementById("ro-t").textContent = (m / n).toFixed(3);
+  },
+});
+/* Legibility first: break the name onto more lines until the letters are big
+   enough, then pick the glyph size so every capital spans ~16 glyph rows. The
+   hero is exactly as tall as the name needs, so it stays short. */
+const NAME_LAYOUTS = [["Armand Comas Massagué"], ["Armand", "Comas Massagué"], ["Armand", "Comas", "Massagué"]];
+const LH = 0.92, MIN_FONT = 120, MAX_FONT = 230, CAP_ROWS = 21, HERO_SY = 1.34;
+let heroLinesCur = NAME_LAYOUTS[0];
+function heroLayout() {
+  const m = document.createElement("canvas").getContext("2d");
+  m.font = '400 100px "Instrument Serif", serif';
+  const avail = fieldEl.parentElement.getBoundingClientRect().width * 0.92;
+  let font = 0;
+  for (const lines of NAME_LAYOUTS) {
+    const widest = Math.max(...lines.map((l) => m.measureText(l).width)) / 100;
+    font = Math.min(MAX_FONT, avail / widest); heroLinesCur = lines;
+    if (font >= MIN_FONT) break;
+  }
+  const blockH = (heroLinesCur.length * font * LH + font * 0.36) * HERO_SY;   // room for the g / é
+  fieldEl.parentElement.style.height = Math.round(blockH) + "px";
+  field.fs = Math.max(3.6, Math.min(8, (font * HERO_SY * 0.68) / CAP_ROWS / 1.18));
+}
+function heroLines() { return heroLinesCur; }
+let lastMove = 0;
+const fieldEl = document.getElementById("field");
+fieldEl.addEventListener("pointermove", (e) => {
+  const now = performance.now(); if (now - lastMove < 16) return; lastMove = now;
+  const r = fieldEl.getBoundingClientRect(); field.remaskAround(e.clientX - r.left, e.clientY - r.top);
+});
+fieldEl.addEventListener("click", () => field.remaskAll());
+new IntersectionObserver(([en]) => { field.visible = en.isIntersecting; if (en.isIntersecting) field.start(); }).observe(fieldEl);
+
+function bootHero() { heroLayout(); field.layout(); field.setTarget(textTarget(heroLines(), { pad: 0.04, lh: LH, sy: HERO_SY })); }
+Promise.race([document.fonts.load('400 100px "Instrument Serif"'), new Promise((r) => setTimeout(r, 1200))]).then(bootHero);
+let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { bootHero(); portraitField.layout(); }, 150); });
+
+/* ============================== PORTRAIT DENOISER ==============================
+   Hovering over the portrait locally masks the photo into ASCII characters
+   weighted by the image's darkness, which then self-correct back into pixels. */
+class PortraitField {
+  constructor(canvas, img) {
+    this.c = canvas; this.ctx = canvas.getContext("2d"); this.img = img;
+    this.fs = 6.5; this.running = false;
+    this.tick = this.tick.bind(this);
+  }
+  layout() {
+    if (!this.img.complete || !this.img.naturalWidth) return;
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const r = this.c.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    this.w = r.width; this.h = r.height;
+    this.c.width = Math.round(r.width * dpr); this.c.height = Math.round(r.height * dpr);
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.cw = this.fs * 0.62; this.ch = this.fs * 1.12;
+    this.cols = Math.max(1, Math.ceil(this.w / this.cw));
+    this.rows = Math.max(1, Math.ceil(this.h / this.ch));
+    const n = this.cols * this.rows;
+    this.D = new Float32Array(n);                 // darkness in [0, 1]
+    this.at = new Float64Array(n);
+    this.glyph = new Array(n).fill(" ");
+    const off = document.createElement("canvas");
+    off.width = this.cols; off.height = this.rows;
+    const g = off.getContext("2d");
+    g.drawImage(this.img, 0, 0, this.cols, this.rows);
+    const d = g.getImageData(0, 0, this.cols, this.rows).data;
+    for (let i = 0; i < n; i++) {
+      const lum = (0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]) / 255;
+      this.D[i] = Math.min(1, Math.max(0, Math.pow(1 - lum, 0.85)));
+    }
+  }
+  remaskAll(duration = 1700) {
+    if (!this.D) this.layout();
+    if (!this.D) return;
+    const now = performance.now();
+    for (let i = 0; i < this.D.length; i++) {
+      const conf = 0.25 + 0.5 * this.D[i] + 0.25 * Math.random();
+      this.at[i] = REDUCED ? 0 : now + (1 - conf) * duration;
+    }
+    this.start();
+  }
+  remaskAround(px, py, radius = 5.2) {
+    if (!this.D) this.layout();
+    if (!this.D) return;
+    const cx = px / this.cw, cy = py / this.ch, now = performance.now(), r2 = radius * radius;
+    for (let y = Math.max(0, Math.floor(cy - radius)); y < Math.min(this.rows, Math.ceil(cy + radius)); y++)
+      for (let x = Math.max(0, Math.floor(cx - radius * 1.7)); x < Math.min(this.cols, Math.ceil(cx + radius * 1.7)); x++) {
+        const dx = (x - cx) / 1.7, dy = y - cy, d2 = dx * dx + dy * dy;
+        if (d2 > r2) continue;
+        const i = y * this.cols + x;
+        this.at[i] = Math.max(this.at[i], now + 380 + Math.sqrt(d2) * 90 + Math.random() * 780);
+      }
+    this.start();
+  }
+  start() { if (this.D && !this.running) { this.running = true; requestAnimationFrame(this.tick); } }
+  tick(now) {
+    const { ctx, cols, cw, ch } = this;
+    ctx.clearRect(0, 0, this.w, this.h);
+    ctx.font = `500 ${this.fs}px "Geist Mono", ui-monospace, monospace`;
+    ctx.textBaseline = "top";
+    const paper = css("--paper"), ink = css("--ink"), sig = css("--signal");
+    let active = 0;
+    for (let i = 0; i < this.D.length; i++) {
+      const dt = now - this.at[i];
+      if (dt >= 260) continue;
+      active++;
+      const x = (i % cols) * cw, y = ((i / cols) | 0) * ch, dark = this.D[i];
+      if (dt < 0) {
+        if (this.glyph[i] === " " || Math.random() < 0.16) this.glyph[i] = NOISE[(Math.random() * NOISE.length) | 0];
+        ctx.fillStyle = paper; ctx.globalAlpha = 0.94;
+        ctx.fillRect(x, y, cw + 0.6, ch + 0.6);
+        ctx.fillStyle = ink; ctx.globalAlpha = 0.22 + 0.75 * dark;
+        ctx.fillText(this.glyph[i], x, y);
+      } else {
+        const p = dt / 260;
+        const ch_ = RAMP[Math.min(RAMP.length - 1, Math.max(1, Math.round(dark * (RAMP.length - 1))))];
+        ctx.fillStyle = paper; ctx.globalAlpha = (1 - p) * 0.9;
+        ctx.fillRect(x, y, cw + 0.6, ch + 0.6);
+        ctx.fillStyle = p < 0.45 ? sig : ink;
+        ctx.globalAlpha = 1 - p * 0.85;
+        ctx.fillText(ch_, x, y);
+      }
+    }
+    ctx.globalAlpha = 1;
+    if (active > 0) requestAnimationFrame(this.tick);
+    else this.running = false;
+  }
+}
+const pImg = document.getElementById("portrait-img"), pCanvas = document.getElementById("portrait-c");
+const portraitField = new PortraitField(pCanvas, pImg);
+const initPortrait = () => { portraitField.layout(); portraitField.remaskAll(1800); };
+if (pImg.complete && pImg.naturalWidth) initPortrait(); else pImg.addEventListener("load", initPortrait);
+let pLast = 0;
+pCanvas.addEventListener("pointermove", (e) => {
+  const now = performance.now(); if (now - pLast < 16) return; pLast = now;
+  const r = pCanvas.getBoundingClientRect(); portraitField.remaskAround(e.clientX - r.left, e.clientY - r.top);
+});
+pCanvas.addEventListener("click", () => portraitField.remaskAll(1500));
+
+/* ============================== INDEX ============================== */
+const idx = document.getElementById("index"), filt = document.getElementById("filters");
+
+idx.innerHTML = WORKS.map((w) => `
+  <article class="row${w.oral ? " oral" : ""}${w.pending ? " pending" : ""}" data-pillar="${w.pillar}" data-id="${w.id}">
+    <button class="row-head" aria-expanded="false">
+      <span class="yr">${w.year}</span>
+      <span class="thumb">${w.thumb ? `<img src="${w.thumb}" alt="${esc(w.short)}" loading="lazy" width="144" height="90">` : ""}</span>
+      <span class="t">${esc(w.title)}</span>
+      <span class="venue">${esc(w.venue)}</span>
+      <span class="pc" title="${PILLARS[w.pillar].label}">${PILLARS[w.pillar].n}</span>
+    </button>
+    <div class="body"><div><div class="body-in"><div class="txt">
+      ${w.fig ? `<figure class="fig"><img src="${w.fig}" alt="Main figure: ${esc(w.short)}" loading="lazy"></figure>` : ""}
+      <p class="blurb">${esc(w.blurb)}</p>
+      <p class="authors">${authorsHTML(w.authors)}</p>
+      <div class="links">${w.links.length ? w.links.map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener">${l} ↗</a>`).join("") : '<span class="na">Links soon</span>'}</div>
+    </div></div></div></div>
+  </article>`).join("");
+
+const counts = WORKS.reduce((m, w) => ((m[w.pillar] = (m[w.pillar] || 0) + 1), m), {});
+filt.innerHTML = `<button aria-pressed="true" data-f="all">All<sup>${WORKS.length}</sup></button>` +
+  Object.entries(PILLARS).map(([k, p]) => `<button aria-pressed="false" data-f="${k}">${p.n} ${p.label}<sup>${counts[k] || 0}</sup></button>`).join("");
+
+function applyFilter(f) {
+  filt.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.f === f));
+  idx.querySelectorAll(".row").forEach((r) => r.classList.toggle("hide", f !== "all" && r.dataset.pillar !== f));
+}
+filt.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) applyFilter(b.dataset.f); });
+document.querySelectorAll("[data-filter]").forEach((a) => a.addEventListener("click", () => applyFilter(a.dataset.filter)));
+
+idx.addEventListener("click", (e) => {
+  const head = e.target.closest(".row-head"); if (!head) return;
+  const row = head.parentElement, open = !row.classList.contains("open");
+  row.classList.toggle("open", open); head.setAttribute("aria-expanded", open);
+});
+
+/* figure plate: denoises the paper's teaser (or its name until figures arrive) */
+const plate = document.getElementById("plate");
+const plateField = new GlyphField(document.getElementById("plate-c"), { fs: 5, duration: 900 });
+let px = 0, py = 0, tx = 0, ty = 0, plateOn = false, plateId = null, plateLayoutDone = false;
+idx.addEventListener("pointerover", (e) => {
+  const row = e.target.closest(".row"); if (!row || row.dataset.id === plateId) return;
+  plateId = row.dataset.id;
+  const w = WORKS.find((x) => x.id === plateId);
+  document.getElementById("plate-l").textContent = w.short;
+  document.getElementById("plate-v").textContent = PILLARS[w.pillar].n;
+  plate.classList.add("on"); plateOn = true;
+  if (!plateLayoutDone) { plateField.layout(); plateLayoutDone = true; }
+  // When teaser figures exist, swap textTarget for an image-luminance target.
+  plateField.setTarget(w.fig && FIGS[w.id]?.complete && FIGS[w.id].naturalWidth
+    ? imageTarget(FIGS[w.id])
+    : textTarget([w.short], { align: "center", pad: 0.08, italic: true }));
+});
+idx.addEventListener("pointerleave", hidePlate);
+addEventListener("scroll", hidePlate, { passive: true });
+function hidePlate() { plate.classList.remove("on"); plateOn = false; plateId = null; }
+addEventListener("pointermove", (e) => { tx = e.clientX + 24; ty = e.clientY + 24; });
+(function follow() {
+  px += (tx - px) * 0.18; py += (ty - py) * 0.18;
+  const x = Math.min(px, innerWidth - 276), y = Math.min(py, innerHeight - 184);
+  plate.style.translate = `${x}px ${y}px`;
+  requestAnimationFrame(follow);
+})();
+
+/* ============================== NOW / PATH ============================== */
+document.getElementById("news").innerHTML = NEWS.map(([d, e]) => `<li><span class="d">${d}</span><span class="e">${e}</span></li>`).join("");
+document.getElementById("mail").href = `mailto:${EMAIL}`;
+document.getElementById("links").innerHTML = LINKS.map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener">${l} ↗</a>`).join("");
+document.getElementById("cv").innerHTML = CV.map(([d, w, s]) => `<div><span class="d">${d}</span><span class="w">${w}<small>${s}</small></span></div>`).join("");
+</script>
+</body>
+</html>
