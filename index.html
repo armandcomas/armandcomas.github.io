@@ -90,25 +90,32 @@
   .row { border-bottom: 1px solid var(--hair); transition: opacity .35s; }
   .row.hide { display: none; }
   .row-head { all: unset; box-sizing: border-box; width: 100%; cursor: pointer; display: grid; align-items: center;
-              grid-template-columns: 44px 152px 1fr minmax(110px, 190px) 26px; gap: 18px; padding: 16px 0; }
+              grid-template-columns: 44px 1fr minmax(105px, auto) 24px 148px; gap: 18px; padding: 14px 0; }
   .row-head:focus-visible { outline: 1px dashed var(--signal); outline-offset: 2px; }
   .row .yr, .row .venue, .row .pc { font: 400 11px/1 var(--mono); letter-spacing: .04em; text-transform: uppercase; color: var(--mute); }
   .row .venue { text-align: right; line-height: 1.4; color: var(--ink); }
   .row .pc { text-align: right; }
-  .row .thumb { width: 152px; aspect-ratio: 2 / 1; border: 1px solid var(--hair); background: #fff;
-                overflow: hidden; display: block; flex-shrink: 0; transition: border-color .25s, transform .35s cubic-bezier(.2,.7,.2,1); }
-  .row .thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
-  .row-head:hover .thumb, .row.open .thumb { border-color: var(--ink); transform: scale(1.02); }
+  .row .thumb { width: 148px; aspect-ratio: 2 / 1; background: transparent;
+                overflow: hidden; display: block; flex-shrink: 0; justify-self: end; }
+  .row .thumb img { width: 100%; height: 100%; object-fit: contain; object-position: right center; display: block;
+                    mix-blend-mode: multiply; filter: saturate(.22) contrast(1.08); opacity: .86;
+                    transition: filter .35s, opacity .35s, transform .35s cubic-bezier(.2,.7,.2,1); }
+  .row-head:hover .thumb img, .row.open .thumb img { filter: saturate(.95) contrast(1.04); opacity: 1; transform: scale(1.03); }
   .row .t { font: 400 clamp(20px, 2.2vw, 31px)/1.12 var(--serif); letter-spacing: -.01em; transition: transform .35s cubic-bezier(.2,.7,.2,1); }
   .row-head:hover .t, .row.open .t { font-style: italic; transform: translateX(6px); }
   .body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s cubic-bezier(.2,.7,.2,1); }
   .row.open .body { grid-template-rows: 1fr; }
   .body > div { overflow: hidden; }
-  .body-in { display: grid; grid-template-columns: 44px 152px 1fr minmax(110px, 190px) 26px; gap: 18px; padding: 4px 0 28px; }
-  .body-in .txt { grid-column: 3; max-width: 62ch; }
+  .body-in { display: grid; grid-template-columns: 44px 1fr; gap: 18px; padding: 4px 0 28px; }
+  .body-in .txt { grid-column: 2; max-width: 66ch; }
   .body-in .blurb { font-size: 16px; margin-bottom: 14px; }
-  .fig { margin: 4px 0 18px; border: 1px solid var(--hair); background: #fff; }
-  .fig img { display: block; width: 100%; height: auto; mix-blend-mode: multiply; }
+  .fig { margin: 6px 0 18px; padding: 14px 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); background: transparent; }
+  .fig img { display: block; width: 100%; max-height: 250px; object-fit: contain; object-position: left center;
+             mix-blend-mode: multiply; filter: saturate(.88) contrast(1.04); }
+  @media (prefers-color-scheme: dark) {
+    .row .thumb, .fig { background: #f1efe9; padding: 4px; border-radius: 2px; }
+    .row .thumb img, .fig img { mix-blend-mode: multiply; }
+  }
   .body-in .authors { font: 400 12px/1.6 var(--mono); color: var(--mute); margin-bottom: 14px; }
   .body-in .authors .me { color: var(--ink); text-decoration: underline; text-decoration-color: var(--signal); text-underline-offset: 3px; }
   .links { display: flex; gap: 18px; flex-wrap: wrap; }
@@ -116,7 +123,7 @@
   .links a:hover { color: var(--signal); border-color: var(--signal); }
   .links .na { font: 400 11px/1 var(--mono); color: var(--mute); text-transform: uppercase; }
 
-  /* figure plate following cursor (disabled in favor of inline row thumbnails) */
+  /* figure plate disabled */
   .plate { display: none; }
   .tch { display: none; }
   @media (hover: none) { .plate, .hov { display: none; } .tch { display: inline; } }
@@ -150,10 +157,11 @@
     .hero-foot .id-card, .hero-foot .bio, .label, .content { grid-column: 1 / -1; }
     .label { position: static; }
     .label .num { font-size: 44px; }
-    .row-head { grid-template-columns: 108px 1fr; align-items: start; }
+    .row-head { grid-template-columns: 1fr 108px; align-items: center; }
     .row .yr { display: none; }
-    .row .thumb { width: 108px; grid-row: 1 / span 2; }
-    .row .venue { grid-column: 2; text-align: left; }
+    .row .t { grid-column: 1; }
+    .row .venue { grid-column: 1; text-align: left; }
+    .row .thumb { width: 108px; grid-column: 2; grid-row: 1 / span 2; }
     .row .pc { display: none; }
     .body-in { grid-template-columns: 1fr; }
     .body-in .txt { grid-column: 1; }
@@ -546,10 +554,10 @@ idx.innerHTML = WORKS.map((w) => `
   <article class="row${w.oral ? " oral" : ""}${w.pending ? " pending" : ""}" data-pillar="${w.pillar}" data-id="${w.id}">
     <button class="row-head" aria-expanded="false">
       <span class="yr">${w.year}</span>
-      <span class="thumb">${w.thumb ? `<img src="${w.thumb}" alt="${esc(w.short)}" loading="lazy" width="144" height="90">` : ""}</span>
       <span class="t">${esc(w.title)}</span>
       <span class="venue">${esc(w.venue)}</span>
       <span class="pc" title="${PILLARS[w.pillar].label}">${PILLARS[w.pillar].n}</span>
+      <span class="thumb">${w.thumb ? `<img src="${w.thumb}" alt="${esc(w.short)}" loading="lazy" width="148" height="74">` : ""}</span>
     </button>
     <div class="body"><div><div class="body-in"><div class="txt">
       ${w.fig ? `<figure class="fig"><img src="${w.fig}" alt="Main figure: ${esc(w.short)}" loading="lazy"></figure>` : ""}
@@ -588,10 +596,7 @@ idx.addEventListener("pointerover", (e) => {
   document.getElementById("plate-v").textContent = PILLARS[w.pillar].n;
   plate.classList.add("on"); plateOn = true;
   if (!plateLayoutDone) { plateField.layout(); plateLayoutDone = true; }
-  // When teaser figures exist, swap textTarget for an image-luminance target.
-  plateField.setTarget(w.fig && FIGS[w.id]?.complete && FIGS[w.id].naturalWidth
-    ? imageTarget(FIGS[w.id])
-    : textTarget([w.short], { align: "center", pad: 0.08, italic: true }));
+  plateField.setTarget(textTarget([w.short], { align: "center", pad: 0.08, italic: true }));
 });
 idx.addEventListener("pointerleave", hidePlate);
 addEventListener("scroll", hidePlate, { passive: true });
