@@ -9,6 +9,8 @@
 <meta name="description" content="Armand Comas Massagué — Research Scientist at Google XR (Syntec). Leveraging multi-modal generative models for synthesizing the world in 3D.">
 <meta property="og:title" content="Armand Comas Massagué">
 <meta property="og:description" content="Research Scientist at Google XR (Syntec) — leveraging multi-modal generative models for synthesizing the world in 3D.">
+<meta property="og:image" content="https://armandcomas.github.io/portrait.jpg">
+<meta property="og:url" content="https://armandcomas.github.io/">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
 <meta name="theme-color" content="#f1efe9">
@@ -83,7 +85,7 @@
   .readout { margin-top: 14px; line-height: 1.65; opacity: .88; }
   .readout b { font-weight: 500; color: var(--ink); }
   .hero .intro-main { grid-column: 5 / span 8; min-width: 0; }
-  .name-wrap { position: relative; width: 100%; min-height: 58px; margin-bottom: 14px; }
+  .name-wrap { grid-column: 1 / -1; position: relative; width: 100%; min-height: 58px; margin-bottom: 4px; }
   #field { display: block; width: 100%; height: 100%; cursor: crosshair; }
   .bio { font: 400 clamp(16px, 1.25vw, 18.5px)/1.6 var(--sans); color: var(--ink); }
   .bio p + p { margin-top: 12px; }
@@ -245,6 +247,11 @@
 
 <main id="top">
   <section class="hero">
+    <div class="name-wrap" id="name-wrap" title="Move cursor or click to re-sample">
+      <h1 class="sr">Armand Comas Massagué</h1>
+      <canvas id="field" aria-hidden="true"></canvas>
+    </div>
+
     <div class="id-card">
       <figure class="portrait" id="portrait-fig" title="Move cursor or click to re-sample">
         <img id="portrait-img" src="portrait.jpg" alt="Armand Comas Massagué" width="280" height="393">
@@ -263,10 +270,6 @@
     </div>
 
     <div class="intro-main">
-      <div class="name-wrap" id="name-wrap" title="Move cursor or click to re-sample">
-        <h1 class="sr">Armand Comas Massagué</h1>
-        <canvas id="field" aria-hidden="true"></canvas>
-      </div>
       <div class="bio">
         <p>I'm a Research Scientist at Google XR, on the Syntec team, where I use multi-modal generative models to synthesize the world in 3D.</p>
         <p>Before that, I did my <a href="https://search.proquest.com/openview/d89381ffeb1ebf77b77cba2af181a40e/1?pq-origsite=gscholar&amp;cbl=18750&amp;diss=y" target="_blank" rel="noopener">PhD</a> with <a href="https://coe.northeastern.edu/faculty/octavia-camps/" target="_blank" rel="noopener">Octavia Camps</a> at Northeastern University's Robust Systems Lab, where I studied the structure underneath generation: how to interpret, manipulate, and compose representations to gain finer control over the generative process.</p>
@@ -384,10 +387,10 @@ class GlyphField {
     if (w >= 540) {
       lines = [full];
       const refW = Math.max(1, mctx.measureText(full).width);
-      const fitPx = (w * 0.99) / (refW / refPx);
-      fontPx = Math.min(68, Math.max(38, fitPx));
+      const fitPx = (w * 0.995) / (refW / refPx);
+      fontPx = Math.min(118, Math.max(38, fitPx));
       lineH = fontPx * 1.15;
-      h = Math.min(82, Math.max(62, Math.ceil(lineH)));
+      h = Math.min(138, Math.max(62, Math.ceil(lineH)));
     } else {
       lines = twoLines;
       const refW = Math.max(
