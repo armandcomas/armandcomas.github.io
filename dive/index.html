@@ -1,0 +1,588 @@
+<!-- Copyright 2026 Google LLC. SPDX-License-Identifier: Apache-2.0 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learning Disentangled Representations of Video with Missing Data</title>
+<meta name="description" content="DIVE (NeurIPS 2020): Disentangled Imputed Video autoEncoder — an object-centric deep generative model that imputes missing frames and predicts future video by disentangling appearance, pose, and missingness.">
+<meta property="og:title" content="Learning Disentangled Representations of Video with Missing Data">
+<meta property="og:description" content="NeurIPS 2020. Object-centric video imputation and prediction with disentangled static/dynamic appearance, pose, and missingness latent variables.">
+<meta property="og:image" content="https://armandcomas.github.io/dive/figs/fig1_architecture.png">
+<meta property="og:url" content="https://armandcomas.github.io/dive/">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --text: #4a4a4a;
+    --strong: #363636;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --link: #3273dc;
+    --code-bg: #f5f5f5;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: #ffffff;
+    color: var(--text);
+    font-family: 'Noto Sans', 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  .narrow { max-width: 768px; margin: 0 auto; }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 64px 0 24px; text-align: center; }
+  .publication-title {
+    font-family: 'Google Sans', 'DM Sans', sans-serif;
+    font-weight: 500;
+    color: var(--strong);
+    font-size: 2.75rem;
+    line-height: 1.15;
+    margin: 0 0 24px;
+    letter-spacing: -0.01em;
+  }
+  .publication-authors {
+    font-family: 'Google Sans', 'DM Sans', sans-serif;
+    font-size: 1.25rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .publication-authors a { color: var(--link); }
+  .author-block { display: inline-block; white-space: nowrap; margin: 0 4px; }
+  .affiliations { font-size: 1.05rem; margin-top: 8px; }
+  .affiliations .author-block { margin: 0 10px; }
+  .venue {
+    font-family: 'Google Sans', 'DM Sans', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--strong);
+    margin: 16px 0 4px;
+  }
+  .publication-links { margin-top: 18px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .button {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #363636; color: #ffffff;
+    border-radius: 9999px;
+    padding: 7px 18px 7px 16px;
+    font-family: 'Google Sans', 'DM Sans', sans-serif;
+    font-size: 1rem; line-height: 1.5;
+    transition: background 0.15s ease;
+  }
+  .button:hover { background: #4a4a4a; text-decoration: none; }
+  .button svg { width: 16px; height: 16px; fill: currentColor; flex: none; }
+  .tldr { font-size: 1.15rem; margin: 26px auto 0; max-width: 860px; color: var(--text); }
+  .tldr b { color: var(--strong); }
+
+  /* ---------- sections ---------- */
+  section { padding: 36px 0; }
+  h2.title {
+    font-family: 'Google Sans', 'DM Sans', sans-serif;
+    font-weight: 500;
+    color: var(--strong);
+    font-size: 2rem;
+    line-height: 1.2;
+    text-align: center;
+    margin: 0 0 22px;
+  }
+  h3.title {
+    font-family: 'Google Sans', 'DM Sans', sans-serif;
+    font-weight: 500;
+    color: var(--strong);
+    font-size: 1.5rem;
+    line-height: 1.25;
+    text-align: center;
+    margin: 36px 0 16px;
+  }
+  .content p { text-align: justify; margin: 0 0 1em; hyphens: auto; }
+  .content ul { margin: 0 0 1em; padding-left: 1.4em; }
+  .content li { margin-bottom: 0.4em; }
+  .content strong { color: var(--strong); }
+
+  figure { margin: 28px 0 32px; text-align: center; }
+  figure img { width: 100%; height: auto; display: block; margin: 0 auto; }
+  figure.wide { width: min(1200px, calc(100vw - 48px)); position: relative; left: 50%; transform: translateX(-50%); }
+  figure.wide figcaption { max-width: 860px; }
+  a.figlink { display: block; }
+  figure.teaser img { max-width: 780px; }
+  figure.medium img { max-width: 740px; }
+  figcaption {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 12px auto 0;
+    max-width: 860px;
+    text-align: left;
+  }
+  figcaption b { color: #4b5563; }
+
+  .equation {
+    font-family: 'Times New Roman', 'Noto Serif', Georgia, serif;
+    font-size: 1.12rem;
+    color: var(--strong);
+    text-align: center;
+    margin: 8px 0 20px;
+    line-height: 2;
+    overflow-x: auto;
+    max-width: 100%;
+    padding: 2px 4px;
+  }
+  .equation .op-stack { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.05; margin: 0 3px; }
+  .equation .op-stack small { font-size: 0.68em; }
+  .equation .op-stack .sym { font-size: 1.35em; line-height: 1; }
+  .equation .brace-group { display: inline-flex; align-items: center; vertical-align: middle; text-align: left; }
+  .equation .brace { font-size: 2.35em; font-weight: 300; line-height: 1; margin-right: 4px; }
+  .equation .cases { display: inline-flex; flex-direction: column; line-height: 1.45; font-size: 0.96em; }
+
+  table.results {
+    border-collapse: collapse;
+    margin: 6px auto 4px;
+    font-size: 0.95rem;
+    min-width: 72%;
+  }
+  table.results th, table.results td { padding: 6px 12px; text-align: center; white-space: nowrap; }
+  table.results thead tr:first-child th { border-top: 2px solid var(--strong); }
+  table.results thead tr:last-child th { border-bottom: 1px solid var(--strong); }
+  table.results tbody tr:last-child td { border-bottom: 2px solid var(--strong); }
+  table.results td:first-child, table.results th:first-child { text-align: left; }
+  table.results tr.ours td { font-weight: 700; color: var(--strong); }
+  table.results tr.sec-hdr td {
+    text-align: left;
+    font-weight: 600;
+    color: var(--strong);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    background: #fafafa;
+    padding-top: 7px;
+    padding-bottom: 7px;
+  }
+  table.results .grp { border-bottom: 1px solid var(--line); }
+  .table-wrap { overflow-x: auto; margin: 26px 0 32px; }
+  .table-wrap figcaption { margin-top: 12px; }
+
+  /* ---------- bibtex ---------- */
+  .bibtex-wrap { position: relative; }
+  pre {
+    background: var(--code-bg);
+    color: var(--strong);
+    padding: 20px 22px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px;
+    background: #ffffff; color: var(--strong);
+    border: 1px solid var(--line); border-radius: 9999px;
+    font-family: 'Google Sans', 'DM Sans', sans-serif; font-size: 0.8rem;
+    padding: 3px 12px; cursor: pointer;
+  }
+  .copy-btn:hover { border-color: #b5b5b5; }
+
+  footer { padding: 32px 0 48px; text-align: center; color: var(--muted); font-size: 0.85rem; }
+  footer a { color: var(--muted); text-decoration: underline; }
+
+  @media (max-width: 640px) {
+    .hero { padding-top: 40px; }
+    .publication-title { font-size: 1.95rem; }
+    .publication-authors { font-size: 1.05rem; }
+    .affiliations { font-size: 0.95rem; }
+    .affiliations .author-block { white-space: normal; }
+    h2.title { font-size: 1.6rem; }
+    h3.title { font-size: 1.25rem; }
+    .content p { text-align: left; }
+    .equation { font-size: 0.98rem; }
+    table.results { font-size: 0.82rem; min-width: 0; }
+    table.results th, table.results td { padding: 4px 6px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ======================= HERO ======================= -->
+<header class="hero">
+  <div class="container">
+    <h1 class="publication-title">Learning Disentangled Representations of Video with Missing Data</h1>
+
+    <div class="publication-authors">
+      <span class="author-block"><a href="https://armandcomas.github.io/">Armand Comas</a><sup>1</sup>,</span>
+      <span class="author-block">Chi Zhang<sup>2</sup>,</span>
+      <span class="author-block">Zlatan Feric<sup>2</sup>,</span>
+      <span class="author-block"><a href="https://coe.northeastern.edu/people/camps-octavia/">Octavia Camps</a><sup>1</sup>,</span>
+      <span class="author-block"><a href="https://www.roseyu.com/">Rose Yu</a><sup>2,3</sup></span>
+    </div>
+    <div class="publication-authors affiliations">
+      <span class="author-block"><sup>1</sup>College of Electrical and Computer Engineering, Northeastern University</span>
+      <span class="author-block"><sup>2</sup>Khoury College of Computer Sciences, Northeastern University</span>
+      <span class="author-block"><sup>3</sup>Computer Science &amp; Engineering, University of California San Diego</span>
+    </div>
+
+    <div class="venue">NeurIPS 2020</div>
+
+    <div class="publication-links">
+      <a class="button" href="https://arxiv.org/pdf/2006.13391">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 13h8v1.6H8V13zm0 3.4h8V18H8v-1.6zM8 9.6h3.5v1.6H8V9.6z"/></svg>
+        <span>Paper</span>
+      </a>
+      <a class="button" href="https://arxiv.org/abs/2006.13391">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5C9.8 3.2 7.1 2.5 4 2.5c-.6 0-1 .4-1 1v14c0 .6.4 1 1 1 3 0 5.6.7 7.6 2 .3.2.6.2.9 0 2-1.3 4.6-2 7.5-2 .6 0 1-.4 1-1v-14c0-.6-.4-1-1-1-3.1 0-5.8.7-8 2zm-1 13.9c-1.9-.9-4.1-1.4-6.5-1.5V4.5c2.4.1 4.7.7 6.5 1.8v12.1zm8.5-1.5c-2.4.1-4.6.6-6.5 1.5V6.3c1.8-1.1 4.1-1.7 6.5-1.8v12.4z"/></svg>
+        <span>arXiv</span>
+      </a>
+      <a class="button" href="https://github.com/Rose-STL-Lab/DIVE">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        <span>Code</span>
+      </a>
+      <a class="button" href="#bibtex">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 17h3l2-4V7h-6v6h3l-2 4zm8 0h3l2-4V7h-6v6h3l-2 4z"/></svg>
+        <span>BibTeX</span>
+      </a>
+      <a class="button" href="../">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        <span>Homepage</span>
+      </a>
+    </div>
+
+    <p class="tldr"><b>TL;DR:</b> DIVE decomposes multi-object videos into per-object appearance, pose, and binary missingness latent variables, imputing missing frames in latent space to reconstruct corrupted inputs and forecast future video.</p>
+  </div>
+</header>
+
+<!-- ======================= TEASER ======================= -->
+<section style="padding-top: 8px;">
+  <div class="container">
+    <figure class="teaser">
+      <a href="figs/fig1_architecture.png" class="figlink"><img src="figs/fig1_architecture.png" alt="Overall architecture of DIVE: input video frames y^{1:K} pass through Pose &amp; Missingness and Appearance encoders to infer z_m^{1:K}, z_p^{1:K}, and z_a^{1:K}, followed by two decoders for reconstruction y^{1:K} and prediction x^{K+1:T}." width="1354" height="593"></a>
+      <figcaption><b>Figure 1: Overall architecture of DIVE.</b> Given an input video sequence <i>y</i><sup>1:<i>K</i></sup> with missing data, DIVE infers the missingness (red, <i>z<sub>m</sub></i><sup>1:<i>K</i></sup>), pose (green, <i>z<sub>p</sub></i><sup>1:<i>K</i></sup>), and appearance (blue, <i>z<sub>a</sub></i><sup>1:<i>K</i></sup>) latent variables for each object. Two separate decoders reconstruct the observed frames <i>y</i><sup>1:<i>K</i></sup> and predict future sequences <i>x</i><sup><i>K</i>+1:<i>T</i></sup> within a variational autoencoder framework.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ======================= ABSTRACT ======================= -->
+<section>
+  <div class="container narrow content">
+    <h2 class="title">Abstract</h2>
+    <p>Missing data poses significant challenges while learning representations of video sequences. We present Disentangled Imputed Video autoEncoder (DIVE), a deep generative model that imputes and predicts future video frames in the presence of missing data. Specifically, DIVE introduces a missingness latent variable, disentangles the hidden video representations into static and dynamic appearance, pose, and missingness factors for each object. DIVE imputes each object’s trajectory where the data is missing. On a moving MNIST dataset with various missing scenarios, DIVE outperforms the state of the art baselines by a substantial margin. We also present comparisons on a real-world MOTSChallenge pedestrian dataset, which demonstrates the practical value of our method in a more realistic setting. Our code and data can be found at <a href="https://github.com/Rose-STL-Lab/DIVE">https://github.com/Rose-STL-Lab/DIVE</a>.</p>
+  </div>
+</section>
+
+<!-- ======================= MOTIVATION ======================= -->
+<section>
+  <div class="container content">
+    <h2 class="title">Motivation: Object Permanence in Video</h2>
+    <div class="narrow">
+      <p>Learning structured representations from raw video is fundamental to spatiotemporal reasoning and forecasting. Yet real-world video sequences frequently suffer from <strong>missing data</strong>: objects become partially occluded at frame boundaries, temporarily disappear out of view before reappearing, or vanish while changing their shape, scale, or brightness. Even a five-month-old infant understands <strong>object permanence</strong>—that an unseen object continues to exist and move along a coherent trajectory.</p>
+      <p>Existing disentangled video prediction models lack this capability when objects go missing:</p>
+      <ul>
+        <li><strong>DDPAE</strong> decomposes scenes into objects with fixed appearance and time-varying pose, assuming complete, uncorrupted video sequences with static object content.</li>
+        <li><strong>SQAIR</strong> introduces an explicit object-presence variable, but lacks a mechanism to recall an object after prolonged full occlusion—causing it to lose track of the object and re-identify it as a brand-new entity upon reappearance.</li>
+        <li><strong>DRNET</strong> factorizes frames into content and pose via adversarial scene discrimination, which degrades sharply when early input frames contain missing or occluded objects.</li>
+      </ul>
+      <p><strong>Disentangled Imputed Video autoEncoder (DIVE)</strong> addresses these limitations by explicitly inferring object-level missingness, imputing missing trajectories directly in the hidden state space, and modeling both static and dynamic object appearances.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= METHOD ======================= -->
+<section>
+  <div class="container content">
+    <h2 class="title">Method</h2>
+    <div class="narrow">
+      <p><strong>Disentangled object representations.</strong> Given an observed video sequence with missing data (<i>y</i><sup>1</sup>, …, <i>y</i><sup><i>K</i></sup>) where each frame <i>y</i><sup><i>t</i></sup> ∈ ℝ<sup><i>d</i></sup>, DIVE assumes up to <i>N</i> objects per scene and jointly reconstructs the input sequence <i>y</i><sup>1:<i>K</i></sup> and predicts <i>T</i> − <i>K</i> + 1 future frames <i>x</i><sup><i>K</i>+1:<i>T</i></sup>. For each object <i>i</i> at frame <i>t</i>, its latent representation <i>z<sub>i</sub><sup>t</sup></i> factorizes into three semantic variables:</p>
+      <div class="equation">
+        <i>z<sub>i</sub><sup>t</sup></i> = [<i>z</i><sub><i>i,a</i></sub><sup><i>t</i></sup>, <i>z</i><sub><i>i,p</i></sub><sup><i>t</i></sup>, <i>z</i><sub><i>i,m</i></sub><sup><i>t</i></sup>],
+        &emsp;
+        <i>z</i><sub><i>i,a</i></sub><sup><i>t</i></sup> ∈ ℝ<sup><i>h</i></sup>,
+        &ensp;
+        <i>z</i><sub><i>i,p</i></sub><sup><i>t</i></sup> ∈ ℝ<sup>3</sup>,
+        &ensp;
+        <i>z</i><sub><i>i,m</i></sub><sup><i>t</i></sup> ∈ ℤ
+      </div>
+      <p>where <i>z</i><sub><i>i,a</i></sub><sup><i>t</i></sup> is the object appearance vector, <i>z</i><sub><i>i,p</i></sub><sup><i>t</i></sup> encodes object pose (<i>x</i>, <i>y</i> coordinates and scale), and <i>z</i><sub><i>i,m</i></sub><sup><i>t</i></sup> ∈ {0, 1} is the binary missingness indicator (<i>z</i><sub><i>i,m</i></sub><sup><i>t</i></sup> = 1 when object <i>i</i> is occluded or missing).</p>
+
+      <p><strong>Latent-space imputation model.</strong> A bidirectional LSTM propagates per-object input encodings <i>h</i><sub><i>i,y</i></sub><sup><i>t</i></sup> = <i>f</i><sub>enc</sub>(<i>h</i><sub><i>i,y</i></sub><sup><i>t</i>−1</sup>, <i>h</i><sub><i>i,y</i></sub><sup><i>t</i>+1</sup>, [<i>y</i><sup><i>t</i></sup>, <i>h</i><sub><i>i</i>−1,<i>y</i></sub><sup><i>t</i></sup>]) over time. When an object is missing, <i>h</i><sub><i>i,y</i></sub><sup><i>t</i></sup> is unreliable; DIVE therefore predicts an autoregressive imputed state <i>ĥ</i><sub><i>i,y</i></sub><sup><i>t</i></sup> = FC(<i>h</i><sub><i>i,p</i></sub><sup><i>t</i>−1</sup>) from the previous pose LSTM state and updates the latent input <i>u<sub>i</sub><sup>t</sup></i> via a Bernoulli mixture:</p>
+      <div class="equation">
+        <i>u<sub>i</sub><sup>t</sup></i> =
+        <span class="brace-group"><span class="brace">{</span><span class="cases">
+          <span><i>ĥ</i><sub><i>i,y</i></sub><sup><i>t</i></sup>, &emsp; <i>z</i><sub><i>i,m</i></sub><sup><i>t</i></sup> = 1</span>
+          <span>γ <i>h</i><sub><i>i,y</i></sub><sup><i>t</i></sup> + (1 − γ) <i>ĥ</i><sub><i>i,y</i></sub><sup><i>t</i></sup>, &emsp; <i>z</i><sub><i>i,m</i></sub><sup><i>t</i></sup> = 0</span>
+        </span></span>,
+        &emsp;
+        γ ∼ Bernoulli(<i>p</i>),
+        &emsp;
+        <i>ĥ</i><sub><i>i,y</i></sub><sup><i>t</i></sup> = FC(<i>h</i><sub><i>i,p</i></sub><sup><i>t</i>−1</sup>)
+      </div>
+      <p>Mixing observed and imputed states during training (<i>p</i> = 0.25) mitigates covariate shift and forces self-supervised trajectory imputation; at test time <i>p</i> = 0 uses <i>ĥ</i><sub><i>i,y</i></sub><sup><i>t</i></sup> whenever <i>z</i><sub><i>i,m</i></sub><sup><i>t</i></sup> = 1. The pose hidden state advances via <i>h</i><sub><i>i,p</i></sub><sup><i>t</i></sup> = LSTM(<i>h</i><sub><i>i,p</i></sub><sup><i>t</i>−1</sup>, <i>u<sub>i</sub><sup>t</sup></i>).</p>
+
+      <p><strong>Inference of missingness, pose, and dynamic appearance.</strong></p>
+      <ul>
+        <li><strong>Missingness inference:</strong> Binary missingness is sampled via a Heaviside step function <i>z</i><sub><i>i,m</i></sub><sup><i>t</i></sup> = <i>H</i>(<i>x</i>), <i>x</i> ∼ 𝒩(μ<sub><i>m</i></sub>, σ<sub><i>m</i></sub><sup>2</sup>) with [μ<sub><i>m</i></sub>, σ<sub><i>m</i></sub><sup>2</sup>] = FC(<i>h</i><sub><i>i,y</i></sub><sup><i>t</i></sup>).</li>
+        <li><strong>Pose inference:</strong> Spatiotemporal dynamics follow a variational state-space transition <i>z</i><sub><i>i,p</i></sub><sup><i>t</i></sup> = <i>f</i><sub>tran</sub>(<i>z</i><sub><i>i,p</i></sub><sup><i>t</i>−1</sup>, β<sub><i>i</i></sub><sup><i>t</i></sup>) with stochastic transition noise β<sub><i>i</i></sub><sup><i>t</i></sup> ∼ 𝒩(μ<sub><i>p</i></sub>, σ<sub><i>p</i></sub><sup>2</sup>) parameterized by <i>h</i><sub><i>i,p</i></sub><sup><i>t</i></sup>.</li>
+        <li><strong>Static &amp; dynamic appearance:</strong> Using an inverse spatial transformer 𝒯<sup>−1</sup>(<i>y</i><sup><i>t</i></sup>; <i>z</i><sub><i>i,p</i></sub><sup><i>t</i></sup>) to rectify each object crop, DIVE decomposes appearance into a static component <i>a</i><sub><i>i,s</i></sub> = FC(<i>h</i><sub><i>i,a</i></sub><sup><i>K</i></sup>) capturing persistent object identity and a dynamic residual state <i>a</i><sub><i>i,d</i></sub><sup><i>t</i>+1</sup> = <i>a</i><sub><i>i,d</i></sub><sup><i>t</i></sup> + δ<sub><i>i,d</i></sub><sup><i>t</i></sup> capturing shape or brightness variations over time:</li>
+      </ul>
+      <div class="equation">
+        <i>q</i>(<i>z</i><sub><i>i,a</i></sub> | <i>y</i><sup>1:<i>K</i></sup>) =
+        <span class="op-stack"><small><i>T</i></small><span class="sym">∏</span><small><i>t</i>=1</small></span>
+        𝒩(μ<sub><i>a</i></sub>, σ<sub><i>a</i></sub><sup>2</sup>),
+        &emsp;
+        [μ<sub><i>a</i></sub>, σ<sub><i>a</i></sub><sup>2</sup>] = FC([<i>a</i><sub><i>i,s</i></sub>, γ <i>a</i><sub><i>i,d</i></sub><sup><i>t</i></sup>]),
+        &ensp;
+        γ ∼ Bernoulli(<i>p</i>)
+      </div>
+    </div>
+
+    <figure class="medium">
+      <a href="figs/fig2_graphical_model.png" class="figlink"><img src="figs/fig2_graphical_model.png" alt="Graphical representation of DIVE showing inference of binary missingness z_{i,m}^t, missing data imputation via h_hat_{i,y}^t and u_i^t, state-space pose inference z_{i,p}^t, and dynamic appearance inference combining static a_{i,s} and dynamic a_{i,d}^t." width="1461" height="974" loading="lazy"></a>
+      <figcaption><b>Figure 2: Graphical representation of DIVE.</b> From top to bottom: inference of the missingness variable <i>z</i><sub><i>i,m</i></sub><sup><i>t</i></sup> from bidirectional input encodings <i>h</i><sub><i>i,y</i></sub><sup><i>t</i></sup>, the autoregressive missing data imputation model updating <i>h</i><sub><i>i,p</i></sub><sup><i>t</i></sup> through <i>u<sub>i</sub><sup>t</sup></i>, state-space inference of the pose vectors <i>z</i><sub><i>i,p</i></sub><sup><i>t</i></sup>, and appearance variable <i>z</i><sub><i>i,a</i></sub><sup><i>t</i></sup> using static (<i>a</i><sub><i>i,s</i></sub>) and dynamic (<i>a</i><sub><i>i,d</i></sub><sup><i>t</i></sup>) appearance inference.</figcaption>
+    </figure>
+
+    <h3 class="title">Object-Wise Generative Model &amp; ELBO</h3>
+    <div class="narrow">
+      <p>For each object <i>i</i>, a deconvolutional decoder <i>f</i><sub>dec</sub>(<i>z</i><sub><i>i,a</i></sub><sup><i>t</i></sup>) synthesizes the canonical object appearance, and a spatial transformer 𝒯(·; <i>z</i><sub><i>i,p</i></sub><sup><i>t</i></sup>) scales and places it into the scene. During input reconstruction, each object is masked by (1 − <i>z</i><sub><i>i,m</i></sub><sup><i>t</i></sup>), whereas future predictions assume complete frames:</p>
+      <div class="equation">
+        <i>p</i>(<i>y</i><sub><i>i</i></sub><sup><i>t</i></sup> | <i>z</i><sub><i>i,a</i></sub><sup><i>t</i></sup>) = 𝒯(<i>f</i><sub>dec</sub>(<i>z</i><sub><i>i,a</i></sub><sup><i>t</i></sup>); <i>z</i><sub><i>i,p</i></sub><sup><i>t</i></sup>) ∘ (1 − <i>z</i><sub><i>i,m</i></sub><sup><i>t</i></sup>),
+        &emsp;
+        <i>p</i>(<i>x</i><sub><i>i</i></sub><sup><i>t</i></sup> | <i>z</i><sub><i>i,a</i></sub><sup><i>t</i></sup>) = 𝒯(<i>f</i><sub>dec</sub>(<i>z</i><sub><i>i,a</i></sub><sup><i>t</i></sup>); <i>z</i><sub><i>i,p</i></sub><sup><i>t</i></sup>)
+      </div>
+      <p>Each generated frame sums the decoded contributions across all <i>N</i> objects, and DIVE is trained end-to-end by maximizing the Evidence Lower Bound (ELBO) over both the corrupted input reconstruction <i>y</i><sup>1:<i>K</i></sup> and complete future prediction <i>x</i><sup><i>K</i>+1:<i>T</i></sup>:</p>
+      <div class="equation">
+        log <i>p</i><sub>θ</sub>(<i>y</i><sup>1:<i>K</i></sup>, <i>x</i><sup><i>K</i>+1:<i>T</i></sup>) ≥
+        𝔼<sub><i>q</i></sub>[log <i>p</i><sub>θ</sub>(<i>y</i><sup>1:<i>K</i></sup> | <i>z</i><sub>1:<i>N</i></sub><sup>1:<i>K</i></sup>) − KL(<i>q</i><sub>φ</sub>(<i>z</i><sub>1:<i>N</i></sub><sup>1:<i>K</i></sup>) ‖ <i>p</i>(<i>z</i><sub>1:<i>N</i></sub><sup>1:<i>K</i></sup>))]
+        + 𝔼<sub><i>q</i></sub>[log <i>p</i><sub>θ</sub>(<i>x</i><sup><i>K</i>+1:<i>T</i></sup> | <i>z</i><sub>1:<i>N</i></sub><sup><i>K</i>+1:<i>T</i></sup>) − KL(<i>q</i><sub>φ</sub>(<i>z</i><sub>1:<i>N</i></sub><sup><i>K</i>+1:<i>T</i></sup>) ‖ <i>p</i>(<i>z</i><sub>1:<i>N</i></sub><sup><i>K</i>+1:<i>T</i></sup>))]
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= MOVING MNIST EXPERIMENTS ======================= -->
+<section>
+  <div class="container content">
+    <h2 class="title">Moving MNIST Experiments</h2>
+    <div class="narrow">
+      <p>DIVE is evaluated on predicting <strong>10 future frames</strong> from <strong>10 input frames</strong> against three state-of-the-art disentangled video prediction baselines: <strong>DRNET</strong>, <strong>SQAIR</strong>, and <strong>DDPAE</strong>. On Moving MNIST (two 28 × 28 digits moving in 64 × 64 frames, tested on 1,024 fixed sequences), three missing-data scenarios are studied:</p>
+      <ul>
+        <li><strong>Scenario 1 (Partial Occlusion):</strong> The upper 32 rows of the 64 × 64 frame are occluded, simulating boundary occlusion.</li>
+        <li><strong>Scenario 2 (Out of Scene):</strong> Each object is completely removed from the frame for two consecutive input steps <i>t</i><sub>0</sub> and <i>t</i><sub>0</sub> + 1 (<i>t</i><sub>0</sub> ∈ [3, 9]).</li>
+        <li><strong>Scenario 3 (Missing with Varying Appearance):</strong> Each digit undergoes progressive elastic deformation (α decreasing linearly from 100 to 0 across the sequence, σ = 4) while each object is completely removed for one time step.</li>
+      </ul>
+    </div>
+
+    <figure class="wide">
+      <a href="figs/fig3_partial_occlusion.jpg" class="figlink"><img src="figs/fig3_partial_occlusion.jpg" alt="Qualitative results on Moving MNIST Scenario 1 (Partial Occlusion) comparing DRNET, SQAIR, DDPAE, and DIVE, along with DIVE decomposed objects 1 and 2 and predicted missingness labels." width="1696" height="631" loading="lazy"></a>
+      <figcaption><b>Figure 3: Scenario 1 — Partial occlusion qualitative results.</b> Top to bottom: ground truth, DRNET, SQAIR, DDPAE, DIVE, decomposed <i>obj 1</i> and <i>obj 2</i>, and DIVE's predicted missingness labels. Even when digits are hidden in the upper half of the frame, DIVE decomposes both objects sharply, predicts their occlusion intervals, and accurately forecasts their future trajectories.</figcaption>
+    </figure>
+
+    <figure class="wide">
+      <a href="figs/fig4_out_of_scene.jpg" class="figlink"><img src="figs/fig4_out_of_scene.jpg" alt="Qualitative results on Moving MNIST Scenario 2 (Out of Scene for two time steps) comparing DRNET, SQAIR, DDPAE, and DIVE." width="1698" height="815" loading="lazy"></a>
+      <figcaption><b>Figure 4: Scenario 2 — Out of scene for two consecutive time steps.</b> DRNET and SQAIR lose track of future poses, while DDPAE confuses object identities and produces blurry digits. DIVE predicts the exact two-step missingness intervals (black blocks in bottom row) and hallucinates the unseen object poses in latent space to produce sharp reconstructions and predictions.</figcaption>
+    </figure>
+
+    <figure class="wide">
+      <a href="figs/fig5_varying_appearance.jpg" class="figlink"><img src="figs/fig5_varying_appearance.jpg" alt="Qualitative results on Moving MNIST Scenario 3 (Complete Missing with Varying Appearance) showing two elastically morphing digits with a complete missing input frame." width="1698" height="816" loading="lazy"></a>
+      <figcaption><b>Figure 5: Scenario 3 — Complete missing with varying appearance.</b> A challenging case where two distinct digits (“2” and “6”) elastically morph into “6” while an entire input frame is dropped. DIVE tracks both identity and continuous shape deformation across the missing frame.</figcaption>
+    </figure>
+
+    <div class="table-wrap">
+      <table class="results">
+        <thead>
+          <tr>
+            <th rowspan="2">Model</th>
+            <th colspan="2" class="grp">BCE ↓</th>
+            <th colspan="2" class="grp">MSE ↓</th>
+            <th colspan="2" class="grp">PSNR ↑</th>
+            <th colspan="2" class="grp">SSIM ↑</th>
+            <th rowspan="2">NELBO ↓</th>
+          </tr>
+          <tr>
+            <th>Rec</th><th>Pred</th>
+            <th>Rec</th><th>Pred</th>
+            <th>Rec</th><th>Pred</th>
+            <th>Rec</th><th>Pred</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="sec-hdr"><td colspan="10">Scenario 1: Partial Occlusion</td></tr>
+          <tr><td>DRNET</td><td>482.07</td><td>852.59</td><td>72.21</td><td>96.36</td><td>7.99</td><td>6.89</td><td>0.76</td><td>0.72</td><td>/</td></tr>
+          <tr><td>SQAIR</td><td>178.71</td><td>967.20</td><td>21.84</td><td>84.73</td><td>13.19</td><td>9.96</td><td><b>0.90</b></td><td>0.73</td><td>-0.16</td></tr>
+          <tr><td>DDPAE</td><td>182.66</td><td><b>417.00</b></td><td>39.09</td><td>67.41</td><td>17.56</td><td>15.49</td><td>0.77</td><td>0.72</td><td>-0.09</td></tr>
+          <tr class="ours"><td>DIVE</td><td>119.25</td><td>459.10</td><td>19.73</td><td>64.49</td><td>20.64</td><td>15.85</td><td>0.90</td><td>0.78</td><td>-0.18</td></tr>
+
+          <tr class="sec-hdr"><td colspan="10">Scenario 2: Out of Scene</td></tr>
+          <tr><td>DRNET</td><td>392.33</td><td>1402.45</td><td>90.64</td><td>187.72</td><td>9.59</td><td>9.88</td><td>0.80</td><td>0.67</td><td>/</td></tr>
+          <tr><td>SQAIR</td><td>468.22</td><td>927.09</td><td>73.13</td><td>137.04</td><td>10.33</td><td>8.21</td><td>0.84</td><td>0.69</td><td>-0.17</td></tr>
+          <tr><td>DDPAE</td><td>266.03</td><td>409.26</td><td>58.37</td><td>89.57</td><td>18.64</td><td>16.94</td><td>0.87</td><td>0.77</td><td>-0.17</td></tr>
+          <tr class="ours"><td>DIVE</td><td>165.42</td><td>321.29</td><td>27.03</td><td>64.17</td><td>22.15</td><td>18.56</td><td>0.93</td><td>0.83</td><td>-0.21</td></tr>
+
+          <tr class="sec-hdr"><td colspan="10">Scenario 3: Missing with Varying Appearance</td></tr>
+          <tr><td>DRNET</td><td>421.72</td><td>1304.53</td><td>90.46</td><td>176.28</td><td>9.91</td><td>7.33</td><td>0.75</td><td>0.70</td><td>/</td></tr>
+          <tr><td>SQAIR</td><td>560.51</td><td>1518.61</td><td>74.30</td><td>163.25</td><td>10.80</td><td>7.64</td><td>0.83</td><td>0.62</td><td>-0.16</td></tr>
+          <tr><td>DDPAE</td><td>322.23</td><td>403.48</td><td>63.63</td><td>82.71</td><td>18.29</td><td>17.22</td><td>0.81</td><td><b>0.78</b></td><td>-0.18</td></tr>
+          <tr class="ours"><td>DIVE</td><td>272.74</td><td>374.59</td><td>42.81</td><td>74.87</td><td>20.08</td><td>17.61</td><td>0.87</td><td>0.78</td><td>-0.19</td></tr>
+        </tbody>
+      </table>
+      <figcaption><b>Table 1: Quantitative comparison across all three Moving MNIST missing-data scenarios</b> for input reconstruction (Rec) and future prediction (Pred) on visible pixels. DIVE substantially outperforms baselines across nearly every metric and scenario.</figcaption>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= PEDESTRIAN EXPERIMENTS ======================= -->
+<section>
+  <div class="container content">
+    <h2 class="title">Real-World Pedestrian Experiments (MOTSChallenge)</h2>
+    <div class="narrow">
+      <p>To evaluate DIVE beyond synthetic digits, experiments are conducted on the real-world <strong>Multi-Object Tracking and Segmentation (MOTSChallenge)</strong> pedestrian dataset. Ground-truth pedestrian silhouettes are extracted into 20-frame sequences at 256 × 256 resolution with up to <i>N</i> = 3 unique pedestrians, augmented with simulated constant camera motion and a 1-frame complete camera occlusion (4,416 training sequences and 675 test sequences from distinct scenes).</p>
+      <p>Walking pedestrians naturally combine <strong>partial occlusions</strong> (Scenario 1) with <strong>continuously varying appearance</strong> (Scenario 3) as limbs articulate and pedestrians overlap. Because DDPAE assumes fixed object appearance and lacks missingness modeling, its reconstructions and forecasts blur out. DIVE isolates up to three individual pedestrians, detects the occluded frame, and preserves sharp silhouettes throughout prediction, reducing MSE by over 41% and BCE by over 45%.</p>
+    </div>
+
+    <div class="table-wrap">
+      <table class="results">
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th>BCE ↓</th>
+            <th>MSE ↓</th>
+            <th>PSNR ↑</th>
+            <th>SSIM ↑</th>
+            <th>NELBO ↓</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>DDPAE</td><td>2495.08</td><td>560.37</td><td>22.22</td><td>0.90</td><td>-0.24</td></tr>
+          <tr class="ours"><td>DIVE</td><td>1355.89</td><td>328.96</td><td>24.82</td><td>0.96</td><td>-0.26</td></tr>
+        </tbody>
+      </table>
+      <figcaption><b>Table 2: Quantitative comparison on the MOTSChallenge pedestrian dataset</b> between the strongest baseline (DDPAE) and DIVE.</figcaption>
+    </div>
+
+    <figure class="wide">
+      <a href="figs/fig6_mots_pedestrians.jpg" class="figlink"><img src="figs/fig6_mots_pedestrians.jpg" alt="Qualitative results on MOTSChallenge pedestrians showing DDPAE vs DIVE, decomposed objects 1, 2, and 3, and predicted missingness labels." width="1698" height="616" loading="lazy"></a>
+      <figcaption><b>Figure 6: MOTSChallenge pedestrian qualitative results.</b> DIVE accurately identifies the complete camera occlusion step (black bar in <i>labels</i>), decomposes the three pedestrians into separate latent slots, and tracks their articulating silhouettes across reconstruction and future prediction.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ======================= ABLATION & FAILURE ANALYSIS ======================= -->
+<section>
+  <div class="container content">
+    <h2 class="title">Ablation Studies &amp; Failure Analysis</h2>
+
+    <h3 class="title" style="margin-top: 8px;">Effect of Dynamic Appearance &amp; Missingness Modeling</h3>
+    <div class="narrow">
+      <p><strong>Dynamic vs. static appearance (Appendix C.1):</strong> On Moving MNIST Scenario 3, comparing DIVE with dynamic appearance (<i>p</i> = 1 at test time) against a static-only variant (<i>p</i> = 0) and DDPAE across 200–600 training epochs confirms that dynamic appearance modeling substantially lowers reconstruction BCE and MSE on elastically deformed digits, while both DIVE variants outperform DDPAE by a wide margin in both reconstruction and prediction.</p>
+      <p><strong>Explicit missingness &amp; imputation (Appendix C.2):</strong> Removing the binary missingness variable and latent imputation from the exact same DIVE architecture on Scenario 2 degrades every metric across both reconstruction and prediction, confirming that explicit missingness reasoning improves scene dynamics learning. Replacing the hard Heaviside step function with a soft Sigmoid label <i>z</i><sub><i>i,m</i></sub><sup><i>t</i></sup> ∈ (0, 1) yields no statistically significant difference.</p>
+    </div>
+
+    <figure class="medium">
+      <a href="figs/fig7_ablation.png" class="figlink"><img src="figs/fig7_ablation.png" alt="Ablation study curves comparing DIVE Dynamic Content, DIVE Static Content, and DDPAE across 200 to 600 epochs on Moving MNIST Scenario 3 for BCE per frame and MSE per frame." width="1681" height="728" loading="lazy"></a>
+      <figcaption><b>Figure 7: Ablation study on static vs. dynamic appearance modeling</b> for Moving MNIST Scenario 3 (BCE per frame left, MSE per frame right across epochs 200–600), alongside DDPAE trained for 600 epochs.</figcaption>
+    </figure>
+
+    <div class="table-wrap">
+      <table class="results">
+        <thead>
+          <tr>
+            <th rowspan="2">Mov. MNIST Scenario 2<br><span style="font-weight:400; color:var(--muted); font-size:0.85em;">Model (trained 300 epochs)</span></th>
+            <th colspan="2" class="grp">BCE ↓</th>
+            <th colspan="2" class="grp">MSE ↓</th>
+            <th colspan="2" class="grp">PSNR ↑</th>
+            <th colspan="2" class="grp">SSIM ↑</th>
+          </tr>
+          <tr>
+            <th>Rec</th><th>Pred</th>
+            <th>Rec</th><th>Pred</th>
+            <th>Rec</th><th>Pred</th>
+            <th>Rec</th><th>Pred</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>DIVE w/o missingness</td><td>236.35</td><td>356.82</td><td>49.07</td><td>76.52</td><td>19.40</td><td>17.66</td><td>0.86</td><td>0.82</td></tr>
+          <tr class="ours"><td>DIVE w missingness</td><td>165.42</td><td>321.29</td><td>27.03</td><td>64.17</td><td>22.15</td><td>18.56</td><td>0.93</td><td>0.83</td></tr>
+        </tbody>
+      </table>
+      <figcaption><b>Table 3: Ablation of the missingness latent variable and latent imputation</b> on Moving MNIST Scenario 2 after 300 training epochs.</figcaption>
+    </div>
+
+    <h3 class="title">Qualitative Success &amp; Failure Modes (Appendix E)</h3>
+    <div class="narrow">
+      <p>Additional qualitative examples across all four benchmarks illustrate both the strengths and boundary conditions of DIVE's causal imputation:</p>
+      <ul>
+        <li><strong>Unseen vs. heavily corrupted objects (Figure 8):</strong> In Scenario 1, if a digit remains completely hidden throughout all 10 input frames and only emerges during future ground-truth frames, causal imputation cannot hallucinate its unseen identity. Conversely, when a digit is heavily corrupted or missing across five input frames, DIVE smoothly imputes and recovers it.</li>
+        <li><strong>Persistent overlap vs. intermittent separation (Figure 9):</strong> In Scenario 2, if two digits overlap in every single input frame, DIVE treats them as a single entangled object; whenever there is at least one separable frame, DIVE cleanly disentangles both digits despite frequent overlap.</li>
+        <li><strong>Appearance ambiguity during occlusion (Figure 10):</strong> In Scenario 3, when two elastically deformed digits (“8” and “0”) morph into nearly identical shapes right before an occlusion, slot identity can swap after the missing frame.</li>
+        <li><strong>Low-displacement pedestrian splitting (Figure 11):</strong> On MOTSChallenge, pedestrians with very small frame-to-frame displacement can occasionally split across redundant object slots, whereas overlapping walking pedestrians with distinct motion are cleanly separated.</li>
+      </ul>
+    </div>
+
+    <figure class="wide">
+      <a href="figs/fig8_appendix_s1.jpg" class="figlink"><img src="figs/fig8_appendix_s1.jpg" alt="Appendix Scenario 1 examples: failure case when digit 7 never appears in input, and success case recovering heavily corrupted digit 5." width="1698" height="903" loading="lazy"></a>
+      <figcaption><b>Figure 8 (Appendix Fig. 8): Additional Scenario 1 (Partial Occlusion) examples.</b> (a) Failure case when digit “7” never appears in the 10 input frames. (b) Success case recovering digit “5” despite heavy corruption and 5 missing input frames.</figcaption>
+    </figure>
+
+    <figure class="wide">
+      <a href="figs/fig9_appendix_s2.jpg" class="figlink"><img src="figs/fig9_appendix_s2.jpg" alt="Appendix Scenario 2 examples: failure case with two digits overlapping in all input frames, and success case with two digits overlapping frequently." width="1698" height="1026" loading="lazy"></a>
+      <figcaption><b>Figure 9 (Appendix Fig. 9): Additional Scenario 2 (Out of Scene) examples.</b> (a) Failure case when two digits overlap in all input frames. (b) Success case disentangling two digits that overlap frequently across the sequence.</figcaption>
+    </figure>
+
+    <figure class="wide">
+      <a href="figs/fig10_appendix_s3.jpg" class="figlink"><img src="figs/fig10_appendix_s3.jpg" alt="Appendix Scenario 3 examples: failure case misrecognizing morphed digits 8 and 0 after occlusion, and success case on similar digits 9 and 8." width="1698" height="1020" loading="lazy"></a>
+      <figcaption><b>Figure 10 (Appendix Fig. 10): Additional Scenario 3 (Varying Appearance) examples.</b> (a) Failure case where elastically deformed digits “8” and “0” switch slots after occlusion. (b) Success case disentangling two similar digits under elastic deformation.</figcaption>
+    </figure>
+
+    <figure class="wide">
+      <a href="figs/fig11_appendix_mots.jpg" class="figlink"><img src="figs/fig11_appendix_mots.jpg" alt="Appendix MOTS examples: failure case with a split low-displacement pedestrian, and success case separating overlapping pedestrians." width="1697" height="894" loading="lazy"></a>
+      <figcaption><b>Figure 11 (Appendix Fig. 11): Additional MOTSChallenge pedestrian examples.</b> (a) Failure case with a split low-displacement pedestrian. (b) Success case separating overlapping pedestrians across occlusion.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ======================= BIBTEX ======================= -->
+<section id="bibtex">
+  <div class="container narrow">
+    <h2 class="title">BibTeX</h2>
+    <div class="bibtex-wrap">
+      <button class="copy-btn" type="button" onclick="copyBib(this)">Copy</button>
+<pre><code id="bibtex-code">@inproceedings{comas2020learning,
+  title     = {Learning Disentangled Representations of Video with Missing Data},
+  author    = {Comas, Armand and Zhang, Chi and Feric, Zlatan and Camps, Octavia and Yu, Rose},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {33},
+  pages     = {10189--10200},
+  year      = {2020},
+  url       = {https://arxiv.org/abs/2006.13391}
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    Page layout inspired by the <a href="https://aakaran.github.io/reasoning_with_sampling/">Reasoning with Sampling</a> and <a href="https://nerfies.github.io/">Nerfies</a> project pages.
+  </div>
+</footer>
+
+<script>
+  function copyBib(btn) {
+    var text = document.getElementById('bibtex-code').innerText;
+    var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1500); };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done);
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+  }
+</script>
+</body>
+</html>

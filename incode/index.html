@@ -1,0 +1,468 @@
+<!-- Copyright 2026 Google LLC. SPDX-License-Identifier: Apache-2.0 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>InCoDe: Interpretable Compressed Descriptions For Image Generation</title>
+<meta name="description" content="InCoDe (ICLR 2025): controllable image generation from succinct, interpretable question-answer descriptions selected by Information Pursuit.">
+<meta property="og:title" content="InCoDe: Interpretable Compressed Descriptions For Image Generation">
+<meta property="og:description" content="ICLR 2025. Controllable image generation from succinct, interpretable question-answer descriptions.">
+<meta property="og:image" content="https://armandcomas.github.io/incode/figs/fig1_teaser.jpg">
+<meta property="og:url" content="https://armandcomas.github.io/incode/">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --text: #4a4a4a;
+    --strong: #363636;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --link: #3273dc;
+    --code-bg: #f5f5f5;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: #ffffff;
+    color: var(--text);
+    font-family: 'Noto Sans', 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+  .narrow { max-width: 768px; margin: 0 auto; }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 64px 0 24px; text-align: center; }
+  .publication-title {
+    font-family: 'Google Sans', 'DM Sans', sans-serif;
+    font-weight: 500;
+    color: var(--strong);
+    font-size: 2.75rem;
+    line-height: 1.15;
+    margin: 0 0 24px;
+    letter-spacing: -0.01em;
+  }
+  .publication-authors {
+    font-family: 'Google Sans', 'DM Sans', sans-serif;
+    font-size: 1.25rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .publication-authors a { color: var(--link); }
+  .author-block { display: inline-block; white-space: nowrap; margin: 0 4px; }
+  .affiliations { font-size: 1.1rem; margin-top: 6px; }
+  .affiliations .author-block { margin: 0 8px; }
+  .footnote { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+  .venue {
+    font-family: 'Google Sans', 'DM Sans', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--strong);
+    margin: 16px 0 4px;
+  }
+  .publication-links { margin-top: 18px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .button {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #363636; color: #ffffff;
+    border-radius: 9999px;
+    padding: 7px 18px 7px 16px;
+    font-family: 'Google Sans', 'DM Sans', sans-serif;
+    font-size: 1rem; line-height: 1.5;
+    transition: background 0.15s ease;
+  }
+  .button:hover { background: #4a4a4a; text-decoration: none; }
+  .button svg { width: 16px; height: 16px; fill: currentColor; flex: none; }
+  .tldr { font-size: 1.15rem; margin: 26px auto 0; max-width: 860px; color: var(--text); }
+  .tldr b { color: var(--strong); }
+
+  /* ---------- sections ---------- */
+  section { padding: 36px 0; }
+  h2.title {
+    font-family: 'Google Sans', 'DM Sans', sans-serif;
+    font-weight: 500;
+    color: var(--strong);
+    font-size: 2rem;
+    line-height: 1.2;
+    text-align: center;
+    margin: 0 0 22px;
+  }
+  h3.title {
+    font-family: 'Google Sans', 'DM Sans', sans-serif;
+    font-weight: 500;
+    color: var(--strong);
+    font-size: 1.5rem;
+    line-height: 1.25;
+    text-align: center;
+    margin: 36px 0 16px;
+  }
+  .content p { text-align: justify; margin: 0 0 1em; hyphens: auto; }
+  .content ul { margin: 0 0 1em; padding-left: 1.4em; }
+  .content li { margin-bottom: 0.35em; }
+  .content strong { color: var(--strong); }
+  .q { font-style: italic; }
+
+  figure { margin: 28px 0 32px; text-align: center; }
+  figure img { width: 100%; height: auto; display: block; margin: 0 auto; }
+  figure.wide { width: min(1200px, calc(100vw - 48px)); position: relative; left: 50%; transform: translateX(-50%); }
+  figure.wide figcaption { max-width: 860px; }
+  a.figlink { display: block; }
+  figure.teaser img { max-width: 620px; }
+  figure.medium img { max-width: 760px; }
+  figcaption {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 12px auto 0;
+    max-width: 860px;
+    text-align: left;
+  }
+  figcaption b { color: #4b5563; }
+
+  .equation {
+    font-family: 'Times New Roman', 'Noto Serif', Georgia, serif;
+    font-size: 1.12rem;
+    color: var(--strong);
+    text-align: center;
+    margin: 6px 0 18px;
+    line-height: 2;
+  }
+  .equation .argmax { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.1; margin: 0 2px; }
+  .equation .argmax small { font-size: 0.72em; }
+
+  table.results {
+    border-collapse: collapse;
+    margin: 6px auto 4px;
+    font-size: 0.95rem;
+    min-width: 60%;
+  }
+  table.results th, table.results td { padding: 6px 14px; text-align: center; }
+  table.results thead tr:first-child th { border-top: 2px solid var(--strong); }
+  table.results thead tr:last-child th { border-bottom: 1px solid var(--strong); }
+  table.results tbody tr:last-child td { border-bottom: 2px solid var(--strong); }
+  table.results td:first-child, table.results th:first-child { text-align: left; }
+  table.results tr.ours td { font-weight: 700; color: var(--strong); }
+  table.results .grp { border-bottom: 1px solid var(--line); }
+  .table-wrap { overflow-x: auto; margin: 26px 0 32px; }
+  .table-wrap figcaption { margin-top: 12px; }
+
+  /* ---------- bibtex ---------- */
+  .bibtex-wrap { position: relative; }
+  pre {
+    background: var(--code-bg);
+    color: var(--strong);
+    padding: 20px 22px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px;
+    background: #ffffff; color: var(--strong);
+    border: 1px solid var(--line); border-radius: 9999px;
+    font-family: 'Google Sans', 'DM Sans', sans-serif; font-size: 0.8rem;
+    padding: 3px 12px; cursor: pointer;
+  }
+  .copy-btn:hover { border-color: #b5b5b5; }
+
+  footer { padding: 32px 0 48px; text-align: center; color: var(--muted); font-size: 0.85rem; }
+  footer a { color: var(--muted); text-decoration: underline; }
+
+  @media (max-width: 640px) {
+    .hero { padding-top: 40px; }
+    .publication-title { font-size: 2rem; }
+    .publication-authors { font-size: 1.05rem; }
+    h2.title { font-size: 1.6rem; }
+    h3.title { font-size: 1.25rem; }
+    .content p { text-align: left; }
+    table.results { font-size: .82rem; min-width: 0; }
+    table.results th, table.results td { padding: 4px 6px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ======================= HERO ======================= -->
+<header class="hero">
+  <div class="container">
+    <h1 class="publication-title">InCoDe:<br>Interpretable Compressed Descriptions For Image Generation</h1>
+
+    <div class="publication-authors">
+      <span class="author-block"><a href="https://armandcomas.github.io/">Armand Comas</a><sup>1</sup>,</span>
+      <span class="author-block">Aditya Chattopadhyay<sup>2*</sup>,</span>
+      <span class="author-block">Feliu Formosa<sup>1</sup>,</span>
+      <span class="author-block">Changyu Liu<sup>1</sup>,</span>
+      <span class="author-block">Octavia Camps<sup>1</sup>,</span>
+      <span class="author-block">René Vidal<sup>3</sup></span>
+    </div>
+    <div class="publication-authors affiliations">
+      <span class="author-block"><sup>1</sup>Northeastern University</span>
+      <span class="author-block"><sup>2</sup>Johns Hopkins University</span>
+      <span class="author-block"><sup>3</sup>University of Pennsylvania</span>
+    </div>
+    <div class="footnote"><sup>*</sup>Work done prior to joining Amazon.</div>
+
+    <div class="venue">ICLR 2025</div>
+
+    <div class="publication-links">
+      <a class="button" href="https://proceedings.iclr.cc/paper_files/paper/2025/file/c6e897d0ffea64caf940ead49d1a370f-Paper-Conference.pdf">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM8 13h8v1.6H8V13zm0 3.4h8V18H8v-1.6zM8 9.6h3.5v1.6H8V9.6z"/></svg>
+        <span>Paper</span>
+      </a>
+      <a class="button" href="https://openreview.net/forum?id=aXwukBD6M6">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5C9.8 3.2 7.1 2.5 4 2.5c-.6 0-1 .4-1 1v14c0 .6.4 1 1 1 3 0 5.6.7 7.6 2 .3.2.6.2.9 0 2-1.3 4.6-2 7.5-2 .6 0 1-.4 1-1v-14c0-.6-.4-1-1-1-3.1 0-5.8.7-8 2zm-1 13.9c-1.9-.9-4.1-1.4-6.5-1.5V4.5c2.4.1 4.7.7 6.5 1.8v12.1zm8.5-1.5c-2.4.1-4.6.6-6.5 1.5V6.3c1.8-1.1 4.1-1.7 6.5-1.8v12.4z"/></svg>
+        <span>OpenReview</span>
+      </a>
+      <a class="button" href="https://github.com/ArmandCom/InCoDe">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        <span>Code</span>
+      </a>
+      <a class="button" href="#bibtex">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 17h3l2-4V7h-6v6h3l-2 4zm8 0h3l2-4V7h-6v6h3l-2 4z"/></svg>
+        <span>BibTeX</span>
+      </a>
+    </div>
+
+    <p class="tldr"><b>TL;DR:</b> InCoDe describes an image with a short sequence of user-defined questions and their answers, chosen in order of information gain, and generates images from that description, so users control generation by editing answers.</p>
+  </div>
+</header>
+
+<!-- ======================= TEASER ======================= -->
+<section style="padding-top: 8px;">
+  <div class="container">
+    <figure class="teaser">
+      <a href="figs/fig1_teaser.jpg" class="figlink"><img src="figs/fig1_teaser.jpg" alt="InCoDe controllable image generation and editing on LSUN Bedroom: a reference image, four re-generations, and edits obtained by changing the answers to queries about red bedsheets, bunk beds, and windows." width="1300" height="1505"></a>
+      <figcaption><b>Figure 1: InCoDe controllable image generation and editing.</b> A user can provide a sample image (a) and request to generate new images that are semantically “similar” to the given one (b). In addition, the user can also encode their preferences in the generated images by specifying certain attributes, like the color of the bedsheets (c).</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ======================= ABSTRACT ======================= -->
+<section>
+  <div class="container narrow content">
+    <h2 class="title">Abstract</h2>
+    <p>Generative models have been successfully applied in diverse domains, from natural language processing to image synthesis. However, despite this success, a key challenge that remains is the ability to control the semantic content of the scene being generated. We argue that adequate control of the generation process requires a data representation that allows users to access and efficiently manipulate the semantic factors shaping the data distribution. This work advocates for the adoption of succinct, informative, and interpretable representations, quantified using information-theoretic principles. Through extensive experiments, we demonstrate the efficacy of our proposed framework both qualitatively and quantitatively. Our work contributes to the ongoing quest to enhance both controllability and interpretability in the generation process. Code available at <a href="https://github.com/ArmandCom/InCoDe">github.com/ArmandCom/InCoDe</a>.</p>
+  </div>
+</section>
+
+<!-- ======================= MOTIVATION ======================= -->
+<section>
+  <div class="container content">
+    <h2 class="title">Motivation: Text Is a Hard Interface for Control</h2>
+    <div class="narrow">
+      <p>Plain textual scene descriptions seem like an intuitive interface for controlling image generation, but the semantic content of an image can be described by many different captions. A bedroom could be described by the objects it contains, its furniture style, its colors, or the relationships among objects: there is no canonical semantic representation. Moreover, constraining a generated image to a rich description that combines numerous concepts remains a challenge for text-to-image models, which struggle with composition in the presence of <strong>negations and large conjunctions</strong>.</p>
+      <p>InCoDe instead represents the semantic content of images by <strong>sets of predefined, user-oriented and task-specific questions and their answers</strong>. Such representations are interpretable, easy for the user to modify, and specialize the generative model to the sub-distribution of interest (e.g. bedroom furniture). This may limit the generality of the model, but it prioritizes combining multiple concepts accurately.</p>
+    </div>
+    <figure class="wide">
+      <a href="figs/fig2_t2i_fail.jpg" class="figlink"><img src="figs/fig2_t2i_fail.jpg" alt="Comparison of Stable Diffusion v1-4, Stable Diffusion XL, Dall-E 3 and InCoDe on a list of nine bedroom attributes; the baselines violate several attributes." width="1855" height="610" loading="lazy"></a>
+      <figcaption><b>Figure 2: Text-to-image models fail when composing multiple concepts.</b> For a given subset of attributes: (a) samples from Stable Diffusion v1-4 (≈ ×0.95 params w.r.t. InCoDe), (b) Stable Diffusion XL (≈ ×10 params), (c) Dall-E 3 (≈ ×15 params), and (d) InCoDe (trained on top of Stable Diffusion v1-4). Red superscripts in the attributes indicate the models that fail to capture them in the presented samples.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ======================= METHOD ======================= -->
+<section>
+  <div class="container content">
+    <h2 class="title">Method</h2>
+    <div class="narrow">
+      <p><strong>Interpretable compressed descriptions.</strong> Given a set of user-defined queries <i>Q</i> (e.g. <span class="q">“Is there a window?”</span>), InCoDe describes an image <i>X</i> by a sequence of query-answer pairs <i>D</i>(<i>X</i>) = [<i>q</i><sub>1</sub>(<i>X</i>), …, <i>q<sub>L</sub></i>(<i>X</i>)], sorted in decreasing order of the information they provide about the answers to <em>all</em> queries, <i>Q</i>(<i>X</i>). The description is built greedily with <strong>Information Pursuit (IP)</strong>: each new query is the one whose answer has maximum mutual information with <i>Q</i>(<i>X</i>), given the history of query-answers observed so far.</p>
+      <div class="equation">
+        <i>q</i><sub>1</sub> = <span class="argmax">arg max<small><i>q</i> ∈ <i>Q</i></small></span> <i>I</i>(<i>q</i>(<i>X</i>); <i>Q</i>(<i>X</i>)),
+        &emsp;
+        <i>q</i><sub><i>k</i>+1</sub> = <span class="argmax">arg max<small><i>q</i> ∈ <i>Q</i></small></span> <i>I</i>(<i>q</i>(<i>X</i>); <i>Q</i>(<i>X</i>) | <i>q</i><sub>1:<i>k</i></sub>(<i>x</i><sup>obs</sup>))
+      </div>
+      <p>The length <i>L</i> controls the compactness of the representation. Ordering queries by information gain also yields a natural information-theoretic notion of semantic similarity: two images are <strong><i>k</i>-similar</strong> if they agree on the first <i>k</i> most informative query-answers.</p>
+      <p><strong>Three modules.</strong> Following Variational IP, InCoDe learns IP directly from data instead of computing mutual information explicitly:</p>
+      <ul>
+        <li><strong>Encoder (Querier).</strong> Given a history of query-answer pairs <i>S</i>, it outputs the most informative next query, which is answered on the reference image by an off-the-shelf VQA model (or the dataset ground truth).</li>
+        <li><strong>Decoder (QuerySet Answerer).</strong> Maps a partial set of query-answers to a distribution over the answers of the complete query set. Querier and QuerySet Answerer are fully-connected networks trained jointly with the VIP objective, first on randomly sampled histories and later on histories produced by the Querier itself.</li>
+        <li><strong>Generator.</strong> A diffusion model that predicts the noise added to the corrupted image <i>X<sub>t</sub></i>, conditioned on the query-answer representation.</li>
+      </ul>
+    </div>
+    <figure class="wide">
+      <a href="figs/fig3_pipeline.png" class="figlink"><img src="figs/fig3_pipeline.png" alt="InCoDe pipeline: a Querier (encoder) selects the next query from the history S, a VQA module answers it on image X, a QuerySetAnswerer (decoder) predicts all answers, and a diffusion Generator is conditioned on the selected query-answers." width="1707" height="482" loading="lazy"></a>
+      <figcaption><b>Figure 3: Overview of the InCoDe pipeline.</b> An <i>Encoder</i> maps a history of query-answer pairs <i>S</i> to the next query <i>q</i>, which is answered by providing <i>q</i> and the reference image <i>X</i> to an off-the-shelf VQA module. A <i>Decoder</i> maps query-based representations to the complete query-answer set, and a diffusion-based <i>Generator</i> predicts the noise ϵ<sub><i>t</i></sub> added to the corrupted image <i>X<sub>t</sub></i>, conditioned on the representations.</figcaption>
+    </figure>
+
+    <h3 class="title">Conditioning a Pre-trained Diffusion Model on Query-Answers</h3>
+    <div class="narrow">
+      <p>Query-answer conditioning is not typical in the literature, so no large pre-trained diffusion model can be used out of the box. InCoDe fine-tunes a frozen text-to-image model (Stable Diffusion v1-4) with two components: (i) <strong>LoRA</strong> with rank 32, and (ii) a <strong>query embedder</strong>, a feature embedding followed by an MLP with a zero-initialized final projection. Each query-answer pair is embedded individually into the dimensionality of a single text token, masked according to whether it is present in the history <i>S</i>, summed to a null-text token, and fed to the UNet through its cross-attention layers.</p>
+      <p>At the beginning of training the UNet only sees null-text tokens and performs unconditional denoising; as training advances, it learns to use the conditional information in <i>S</i>, which is sampled uniformly at random. At inference, the Querier builds a description of length <i>L</i>, either from a reference image (answers from a VQA model) or by asking the user, and images are sampled with classifier-free guidance.</p>
+    </div>
+    <figure class="medium">
+      <a href="figs/fig4_conditioning.png" class="figlink"><img src="figs/fig4_conditioning.png" alt="Fine-tuning scheme: query-answers pass through a trainable embedder and zero-initialized MLP, are added to null-text embeddings, multiplied by a sampled mask, and fed to a frozen pre-trained diffusion model with LoRA." width="1680" height="968" loading="lazy"></a>
+      <figcaption><b>Figure 4: Adapting pre-trained diffusion models to query-based conditions.</b> Proposed scheme to fine-tune text-to-image diffusion models with LoRA. A small neural network (embedder plus an MLP with zero-init for the last layer) maps queries into null-text token features. A mask is then used to train the model with a subset of queries.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ======================= DATASETS ======================= -->
+<section>
+  <div class="container content">
+    <h2 class="title">Datasets and Query Sets</h2>
+    <div class="narrow">
+      <p>InCoDe is evaluated on four datasets of increasing complexity. For LSUN Bedroom and LSUN Churches, no existing dataset met the requirements of the task, so the authors built new ones: a large language model assisted in creating the query sets and a VQA model (BLIP) generated the answers. Both datasets are publicly available: <a href="https://huggingface.co/datasets/fformosa/LSUN_bedroom_VQA_feliu_v4">attribute-based Bedrooms</a> and <a href="https://huggingface.co/datasets/acomasma/lsun_churches_query-answers">attribute-based Churches</a>.</p>
+    </div>
+    <div class="table-wrap">
+      <table class="results">
+        <thead>
+          <tr><th>Dataset (image size)</th><th style="text-align:left">Query set <i>Q</i></th><th>|<i>Q</i>|</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>CLEVR Colors (3 × 64 × 64)</td><td style="text-align:left">Indicator of presence of <i>N</i> or more objects of a particular color</td><td>45</td></tr>
+          <tr><td>CelebA (3 × 64 × 64)</td><td style="text-align:left">Facial attributes</td><td>40</td></tr>
+          <tr><td>LSUN Bedroom (3 × 512 × 512)</td><td style="text-align:left">Room descriptor attributes</td><td>58</td></tr>
+          <tr><td>LSUN Churches (3 × 512 × 512)</td><td style="text-align:left">Church and surroundings descriptor attributes</td><td>44</td></tr>
+        </tbody>
+      </table>
+      <figcaption style="text-align:center"><b>Table 1:</b> Image size and query set for the different datasets.</figcaption>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= QUALITATIVE RESULTS ======================= -->
+<section>
+  <div class="container content">
+    <h2 class="title">Qualitative Results</h2>
+
+    <h3 class="title" style="margin-top: 8px;">Semantic Auto-Encoding and Concept Manipulation</h3>
+    <div class="narrow">
+      <p>InCoDe regenerates a reference image by first representing it in the query-answer space, and then edits it by changing the answers to specific queries. On LSUN Bedroom (Figure 1), re-generations use the complete description of <i>L</i> = 58 query-answer pairs, and edits change one or two attributes. In Figure 2, InCoDe generates samples from a sequence of query-answers alone, where text-to-image models fail. Figure 5 shows the same behavior on LSUN Churches.</p>
+    </div>
+    <figure class="wide">
+      <a href="figs/fig5_churches.jpg" class="figlink"><img src="figs/fig5_churches.jpg" alt="LSUN Churches: reference image, regeneration, and edits setting Asphalt to Yes, People to Yes, and Mountains to No." width="1921" height="438" loading="lazy"></a>
+      <figcaption><b>Figure 5: InCoDe offers users intuitive tools to adjust the semantic elements of generated images.</b> InCoDe describes an image in the query-answer space and generates a new, semantically aligned image. By changing the answer to specific queries, we can modify semantic attributes of the new images.</figcaption>
+    </figure>
+
+    <h3 class="title">Querier Trajectory</h3>
+    <div class="narrow">
+      <p>On CLEVR Colors it is easy to check whether the Querier's choices make sense. It first asks whether there are 4 or more objects (no), then asks about colors one by one, finding gray and green objects, so there are at least 2 objects. At iteration 10 it asks whether there are 3 or more objects and receives a negative answer, which completely captures the semantics of the reference image as defined by the query set. The Generator then synthesizes an image that matches the reference in semantic content.</p>
+    </div>
+    <figure class="wide">
+      <a href="figs/fig6_clevr.jpg" class="figlink"><img src="figs/fig6_clevr.jpg" alt="CLEVR Colors: reference image X, samples generated with the learned Querier and with a random strategy at description lengths 5 to 44, and the first ten queries asked by the Querier with their answers." width="1630" height="520" loading="lazy"></a>
+      <figcaption><b>Figure 6: InCoDe on the CLEVR Colors dataset.</b> Samples generated with the learned Querier (top row) and with the random baseline (bottom row) for increasing description length <i>L</i>. InCoDe generates a sequence of sensible queries, and the Generator produces an image that is semantically equivalent (as defined by the query set) to the reference image after asking only a few queries.</figcaption>
+    </figure>
+
+    <h3 class="title">Corner Cases</h3>
+    <div class="narrow">
+      <p>Concepts that are underrepresented in the training set are still captured through the proposed fine-tuning. When faced with seemingly contradictory answers to different queries, InCoDe synthesizes a creative but implausible solution.</p>
+    </div>
+    <figure class="wide">
+      <a href="figs/fig7_corner.jpg" class="figlink"><img src="figs/fig7_corner.jpg" alt="Left: bedrooms with red curtains (3.2% of training data) and collage images (2.5%). Right: images generated with contradictory answers about seeing a window and seeing plants through the window." width="1853" height="463" loading="lazy"></a>
+      <figcaption><b>Figure 7: InCoDe behaves correctly in corner cases.</b> Left: when generating concepts underrepresented in the training set, images still capture them. Right: for apparently contradictory answers to queries, the Generator tries to satisfy both at the same time, resulting in creative solutions.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ======================= QUANTITATIVE RESULTS ======================= -->
+<section>
+  <div class="container content">
+    <h2 class="title">Quantitative Results</h2>
+
+    <h3 class="title" style="margin-top: 8px;">Effectiveness of the Information Acquisition Strategy</h3>
+    <div class="narrow">
+      <p>Each query-selection strategy produces a description <i>D</i>, from which an attribute classifier predicts the answers to the complete query set <i>Q</i>(<i>X</i>); accuracy and F1 are measured on a 2k-sample test set. InCoDe is compared with random sampling, a decision tree with information gain by impurity criterion (<strong>DT-IC</strong>, the gold standard in principle), and <strong>TopK-IC</strong>, which picks the queries with highest answer entropy in the training set.</p>
+      <p>InCoDe consistently selects queries that yield a better information acquisition strategy than the baselines, especially in more complex scenarios such as the LSUN datasets. DT-IC fragments the data with every query-answer and eventually runs out of training points over which to compute entropy, so its curves flatten. TopK-IC does not suffer from fragmentation but ignores the history. CLEVR, being simple and highly redundant, favors entropy-based methods and explains the poor performance of the random strategy.</p>
+    </div>
+    <figure class="wide">
+      <a href="figs/fig8_quant.png" class="figlink"><img src="figs/fig8_quant.png" alt="Accuracy and F1 versus number of queries on CLEVR Colors, CelebA, LSUN Bedroom and LSUN Churches for InCoDe, DT-IC, TopK-IC and Random." width="1836" height="1101" loading="lazy"></a>
+      <figcaption><b>Figure 8: Performance evaluation of InCoDe using attribute-based queries.</b> Test accuracy and F1 score of an attribute classifier on the predicted representations, as a function of the number of queries. InCoDe outperforms the baselines in all cases, with increasing gains as the datasets become more complex. DT-IC shows similar performance initially, but it suffers from data fragmentation, as well as long computation time.</figcaption>
+    </figure>
+
+    <h3 class="title">Composable Generation</h3>
+    <div class="narrow">
+      <p>To measure how well generated images respect a conjunction of attributes, BLIP answers the queries on the generated images, and accuracy and F1 are computed against the conditioning answers for the 10 queries with highest entropy. Text-based baselines receive the attribute list as a concatenated prompt (e.g. <span class="q">“Photo of a bedroom that does not have white walls, has a window, …”</span>); only 10 attributes are used because of their 77-token limit. All generative models, including InCoDe, use SD v1-4 as the base model. InCoDe performs significantly better than SD v1-4, on which it is built, and also outperforms the larger SD XL. Structured Diffusion, which targets attribute binding, is hurt by the conjunction of numerous concepts.</p>
+    </div>
+    <div class="table-wrap">
+      <table class="results">
+        <thead>
+          <tr><th rowspan="2"></th><th colspan="2" class="grp">LSUN Bedroom</th><th colspan="2" class="grp">LSUN Churches</th></tr>
+          <tr><th>Acc.</th><th>F1</th><th>Acc.</th><th>F1</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>SD V1</td><td>0.61</td><td>0.62</td><td>0.57</td><td>0.55</td></tr>
+          <tr><td>SD XL</td><td>0.58</td><td>0.64</td><td>0.59</td><td>0.61</td></tr>
+          <tr><td>Structured Diffusion</td><td>0.52</td><td>0.54</td><td>0.51</td><td>0.50</td></tr>
+          <tr class="ours"><td>InCoDe</td><td>0.85</td><td>0.84</td><td>0.75</td><td>0.72</td></tr>
+        </tbody>
+      </table>
+      <figcaption><b>Table 2: InCoDe generates images that respect the attributes more often than baselines do.</b> Accuracy and F1 score for the top 10 queries, ranked by their entropy computed on the respective training set.</figcaption>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= BEYOND ATTRIBUTES ======================= -->
+<section>
+  <div class="container content">
+    <h2 class="title">Beyond Attribute-Based Queries</h2>
+    <div class="narrow">
+      <p>InCoDe is not restricted to binary queries. In the appendix, the paper studies <strong>location-based queries</strong>, where a query requests the pixel values of an image patch around a location. Asking all such queries amounts to observing the whole image, and the queries carry spatial structure, so a set of answered patches is parameterized as an image and the Querier uses convolutional blocks. On CLEVR, the Querier first selects a patch in the center of the image and then explores around it as more objects are glimpsed; on CelebA, it selects patches on the main facial features, the clothes and the contour of the head.</p>
+    </div>
+    <figure class="wide">
+      <a href="figs/fig10_location.jpg" class="figlink"><img src="figs/fig10_location.jpg" alt="Location-based queries: sequences of patches selected by the Querier on CLEVR (a) and CelebA (b), with generated samples for description lengths 2, 5, 10 and 20 next to the reference image X." width="1837" height="546" loading="lazy"></a>
+      <figcaption><b>Figure 9 (paper Fig. 10): InCoDe selects meaningful patches according to the data distribution.</b> (a) A sequence of patch queries selected by the Querier on CLEVR, with the associated generated samples (same color border). The Querier initially selects a patch in the center of the image and then explores around it as more objects are glimpsed. (b) An example for CelebA, where the Querier selects patches in the main features of the face, the clothes and the contour of the head.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ======================= LIMITATIONS ======================= -->
+<section>
+  <div class="container narrow content">
+    <h2 class="title">Limitations</h2>
+    <p>InCoDe requires a query set. This is a strength, since the designer is free to select the semantic concepts that matter for the intended generation task, but building the set can be tedious. Large language models can alleviate this, as done for the LSUN Bedroom and Churches query sets, yet human supervision and prompting are still necessary. Designing a framework that lets users define the semantic domain of a query set without directly supervising the query set itself remains an open question.</p>
+  </div>
+</section>
+
+<!-- ======================= BIBTEX ======================= -->
+<section id="bibtex">
+  <div class="container narrow">
+    <h2 class="title">BibTeX</h2>
+    <div class="bibtex-wrap">
+      <button class="copy-btn" type="button" onclick="copyBib(this)">Copy</button>
+<pre><code id="bibtex-code">@inproceedings{comas2025incode,
+  title     = {InCoDe: Interpretable Compressed Descriptions For Image Generation},
+  author    = {Comas, Armand and Chattopadhyay, Aditya and Formosa, Feliu and
+               Liu, Changyu and Camps, Octavia and Vidal, Ren{\'e}},
+  booktitle = {International Conference on Learning Representations},
+  volume    = {2025},
+  pages     = {80030--80061},
+  year      = {2025},
+  url       = {https://openreview.net/forum?id=aXwukBD6M6}
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    Page layout inspired by the <a href="https://aakaran.github.io/reasoning_with_sampling/">Reasoning with Sampling</a> and <a href="https://nerfies.github.io/">Nerfies</a> project pages.
+  </div>
+</footer>
+
+<script>
+  function copyBib(btn) {
+    var text = document.getElementById('bibtex-code').innerText;
+    var done = function () { btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1500); };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done);
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+  }
+</script>
+</body>
+</html>
