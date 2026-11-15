@@ -374,7 +374,7 @@
       <span class="sec-sub mono mute">Industry · Academia</span>
     </div>
     <div class="content"><div class="path" id="cv"></div>
-      <p class="mono mute" style="margin-top:22px;line-height:1.9">Mentored 4 M.Sc. theses and 5 incoming Ph.D. students · Northeastern Dean's Fellowship · Catalan, Spanish, English</p>
+      <p class="mono mute" style="margin-top:22px;line-height:1.9">Mentored 4 M.Sc. theses and 5 incoming Ph.D. students · Northeastern Dean's Fellowship</p>
     </div>
   </section>
 </main>
@@ -436,15 +436,18 @@ class GlyphField {
     this.startTime = 0;
     this.endTime = 0;
     this.totalInk = 0;
+    this.isMobile = false;
+    this.inkMin = 0.26;
     this.fontSig = "";
     this.tick = this.tick.bind(this);
   }
 
   _spec(availWidth) {
     const w = Math.max(240, Math.round(availWidth));
+    const isMobile = w < 540;
     const mctx = document.createElement("canvas").getContext("2d");
     const refPx = 100;
-    mctx.font = `300 ${refPx}px "Google Sans", "DM Sans", sans-serif`;
+    mctx.font = `${isMobile ? 500 : 300} ${refPx}px "Google Sans", "DM Sans", sans-serif`;
     const full = "Armand Comas Massagué";
     const twoLines = ["Armand Comas", "Massagué"];
 
@@ -453,7 +456,7 @@ class GlyphField {
     let lineH;
     let h;
 
-    if (w >= 540) {
+    if (!isMobile) {
       lines = [full];
       const refW = Math.max(1, mctx.measureText(full).width);
       const fitPx = (w * 0.995) / (refW / refPx);
@@ -468,11 +471,11 @@ class GlyphField {
         mctx.measureText(twoLines[1]).width,
       );
       const fitPx = (w * 0.98) / (refW / refPx);
-      fontPx = Math.min(44, Math.max(28, fitPx));
-      lineH = fontPx * 1.16;
-      h = Math.min(108, Math.max(88, Math.round(lines.length * lineH + 8)));
+      fontPx = Math.min(60, Math.max(30, fitPx));
+      lineH = fontPx * 1.14;
+      h = Math.max(88, Math.ceil(lines.length * lineH + 10));
     }
-    return { w, h, lines, fontPx, lineH };
+    return { w, h, lines, fontPx, lineH, isMobile };
   }
 
   _sampleTarget(spec) {
@@ -482,7 +485,7 @@ class GlyphField {
     off.height = Math.round(spec.h * ss);
     const octx = off.getContext("2d", { willReadFrequently: true });
     octx.setTransform(ss, 0, 0, ss, 0, 0);
-    octx.font = `300 ${spec.fontPx}px "Google Sans", "DM Sans", sans-serif`;
+    octx.font = `${spec.isMobile ? 500 : 300} ${spec.fontPx}px "Google Sans", "DM Sans", sans-serif`;
     octx.fillStyle = "#121212";
     octx.textAlign = "left";
     octx.textBaseline = "alphabetic";
@@ -515,17 +518,23 @@ class GlyphField {
 
     this.w = spec.w;
     this.h = spec.h;
+    this.isMobile = spec.isMobile;
+    const inkMin = this.isMobile ? 0.14 : 0.26;
+    this.inkMin = inkMin;
+
     wrap.style.height = this.h + "px";
     this.c.width = Math.round(this.w * dpr);
     this.c.height = Math.round(this.h * dpr);
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const fs = 4.5;
+    const fs = this.isMobile ? 3.8 : 4.5;
     this.fs = fs;
     this.ctx.font = `700 ${fs}px "Geist Mono", ui-monospace, monospace`;
     const measuredCw = this.ctx.measureText("M").width;
-    const cw = measuredCw > 1 ? Math.max(2.7, Math.min(3.0, measuredCw * 1.04)) : 2.85;
-    const ch = 4.5;
+    const cw = this.isMobile
+      ? (measuredCw > 1 ? Math.max(2.3, Math.min(2.6, measuredCw * 1.02)) : 2.45)
+      : (measuredCw > 1 ? Math.max(2.7, Math.min(3.0, measuredCw * 1.04)) : 2.85);
+    const ch = this.isMobile ? 3.8 : 4.5;
     this.cw = cw;
     this.ch = ch;
 
@@ -559,6 +568,9 @@ class GlyphField {
 
     const target = this._sampleTarget(spec);
     const { width: offW, height: offH, data: pixels, ss } = target;
+    const gamma = this.isMobile ? 0.72 : 1.12;
+    const minRi = this.isMobile ? 4 : 1;
+    const denseThresh = this.isMobile ? RAMP.length - 4 : RAMP.length - 2;
     let inkCount = 0;
 
     for (let cy = 0; cy < this.rows; cy++) {
@@ -577,13 +589,13 @@ class GlyphField {
           }
         }
         const rawV = samples > 0 ? sumA / (samples * 255) : 0;
-        const v = rawV > 0 ? Math.pow(rawV, 1.12) : 0;
+        const v = rawV > 0 ? Math.pow(rawV, gamma) : 0;
         const idx = cy * this.cols + cx;
         this.ink[idx] = v;
-        if (v > 0.26) {
+        if (v > inkMin) {
           inkCount++;
-          const ri = Math.min(RAMP.length - 1, Math.max(1, Math.round(v * (RAMP.length - 1))));
-          this.settledGlyph[idx] = ri >= RAMP.length - 2
+          const ri = Math.min(RAMP.length - 1, Math.max(minRi, Math.round(v * (RAMP.length - 1))));
+          this.settledGlyph[idx] = ri >= denseThresh
             ? DENSE_TYPE[(cx * 7 + cy * 13) % DENSE_TYPE.length]
             : RAMP[ri];
         }
@@ -593,7 +605,7 @@ class GlyphField {
     for (let cy = 0; cy < this.rows; cy++) {
       for (let cx = 0; cx < this.cols; cx++) {
         const idx = cy * this.cols + cx;
-        if (this.ink[idx] > 0.26) {
+        if (this.ink[idx] > inkMin) {
           this.nearInk[idx] = 1;
           continue;
         }
@@ -604,7 +616,7 @@ class GlyphField {
         const xMax = Math.min(this.cols - 1, cx + 2);
         for (let ny = yMin; ny <= yMax && !near; ny++) {
           for (let nx = xMin; nx <= xMax; nx++) {
-            if (this.ink[ny * this.cols + nx] > 0.26) {
+            if (this.ink[ny * this.cols + nx] > inkMin) {
               near = 1;
               break;
             }
@@ -615,12 +627,12 @@ class GlyphField {
     }
 
     this.totalInk = Math.max(1, inkCount);
-    this.fontSig = `${document.fonts.check('300 48px "Google Sans"')}:${document.fonts.check('500 12px "Geist Mono"')}`;
+    this.fontSig = `${document.fonts.check('300 48px "Google Sans"')}:${document.fonts.check('500 48px "Google Sans"')}:${document.fonts.check('700 12px "Geist Mono"')}`;
   }
 
   refreshTarget() {
     if (!this.ink) return;
-    const nextSig = `${document.fonts.check('300 48px "Google Sans"')}:${document.fonts.check('500 12px "Geist Mono"')}`;
+    const nextSig = `${document.fonts.check('300 48px "Google Sans"')}:${document.fonts.check('500 48px "Google Sans"')}:${document.fonts.check('700 12px "Geist Mono"')}`;
     const wrap = this.c.parentElement;
     const host = wrap.parentElement;
     const avail = wrap.getBoundingClientRect().width || host.getBoundingClientRect().width || innerWidth - 40;
@@ -635,15 +647,16 @@ class GlyphField {
     if (!this.ink) this.layout();
     if (!this.ink) return;
     const now = performance.now();
+    const inkMin = this.inkMin;
     this.startTime = now;
     this.endTime = REDUCED ? now : now + duration + 240;
     for (let i = 0; i < this.ink.length; i++) {
       const v = this.ink[i];
-      if (REDUCED || (v <= 0.26 && !this.nearInk[i])) {
+      if (REDUCED || (v <= inkMin && !this.nearInk[i])) {
         this.at[i] = -1000;
         continue;
       }
-      if (v > 0.26) {
+      if (v > inkMin) {
         const conf = 0.22 + 0.52 * v + 0.26 * Math.random();
         this.at[i] = now + (1 - conf) * duration;
       } else {
@@ -659,7 +672,7 @@ class GlyphField {
     if (!this.ink) this.layout();
     if (!this.ink || REDUCED) return;
     const now = performance.now();
-    const { cw, ch, cols, rows } = this;
+    const { cw, ch, cols, rows, inkMin } = this;
     const xMin = Math.max(0, Math.floor((px - radius) / cw));
     const xMax = Math.min(cols - 1, Math.floor((px + radius) / cw));
     const yMin = Math.max(0, Math.floor((py - radius) / ch));
@@ -677,7 +690,7 @@ class GlyphField {
         const i = cy * cols + cx;
         const v = this.ink[i];
         const distFrac = Math.sqrt(d2) / radius;
-        if (v > 0.26) {
+        if (v > inkMin) {
           hit = true;
           const nextAt = now + 260 + distFrac * 280 + Math.random() * 520;
           if (nextAt > this.at[i]) this.at[i] = nextAt;
@@ -710,7 +723,7 @@ class GlyphField {
   }
 
   drawFrame(now) {
-    const { ctx, cols, cw, ch, fs, ink, at, settledGlyph, noiseGlyph } = this;
+    const { ctx, cols, cw, ch, fs, ink, at, settledGlyph, noiseGlyph, inkMin } = this;
     ctx.clearRect(0, 0, this.w, this.h);
     ctx.font = `700 ${fs}px "Geist Mono", ui-monospace, monospace`;
     ctx.textBaseline = "middle";
@@ -730,7 +743,7 @@ class GlyphField {
     ctx.globalAlpha = 1;
     for (let i = 0; i < n; i++) {
       const v = ink[i];
-      if (v <= 0.26) continue;
+      if (v <= inkMin) continue;
       const dt = now - at[i];
       if (dt < 240) continue;
       const x = (i % cols) * cw + halfW;
@@ -742,7 +755,7 @@ class GlyphField {
     ctx.globalAlpha = 1;
     for (let i = 0; i < n; i++) {
       const v = ink[i];
-      if (v <= 0.26) continue;
+      if (v <= inkMin) continue;
       const dt = now - at[i];
       if (dt < 0 || dt >= 240) continue;
       maskedInk++;
@@ -758,11 +771,11 @@ class GlyphField {
       if (dt >= 0) continue;
       animating++;
       const v = ink[i];
-      if (v > 0.26) maskedInk++;
+      if (v > inkMin) maskedInk++;
       if (noiseGlyph[i] === " " || Math.random() < 0.22) {
         noiseGlyph[i] = GLYPH_NOISE[(Math.random() * GLYPH_NOISE.length) | 0];
       }
-      ctx.globalAlpha = v > 0.26 ? 0.62 + 0.38 * v : 0.52;
+      ctx.globalAlpha = v > inkMin ? 0.62 + 0.38 * v : 0.52;
       const x = (i % cols) * cw + halfW;
       const y = ((i / cols) | 0) * ch + halfH;
       ctx.fillText(noiseGlyph[i], x, y);
@@ -969,7 +982,8 @@ pCanvas.addEventListener("click", () => portraitField.remaskAll(1500));
 Promise.race([
   Promise.all([
     document.fonts.load('300 48px "Google Sans"'),
-    document.fonts.load('500 12px "Geist Mono"'),
+    document.fonts.load('500 48px "Google Sans"'),
+    document.fonts.load('700 12px "Geist Mono"'),
   ]),
   new Promise((r) => setTimeout(r, 900)),
 ]).then(() => {
