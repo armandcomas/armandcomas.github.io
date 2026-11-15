@@ -27,7 +27,7 @@ const PEOPLE = {
   "Mark Matthews":        "https://research.google/people/mark-j-matthews/",
   "Menglei Chai":         "https://mlchai.com/",
   "Minh-Quan Le":         "https://minhquanlecs.github.io/",
-  "Octavia Camps":        "https://coe.northeastern.edu/faculty/octavia-camps/",
+  "Octavia Camps":        "https://coe.northeastern.edu/people/camps-octavia/",
   "Paulo Gotardo":        "https://paulogotardo.com/",
   "Qiangeng Xu":          "https://github.com/xharlie",
   "René Vidal":           "https://www.grasp.upenn.edu/people/rene-vidal/",
@@ -125,7 +125,7 @@ const NEWS = [
   ["May 2026", "<i>Google XR</i> unveiled <a href=\"https://blog.google/products-and-platforms/platforms/android/android-xr-io-2026/\" target=\"_blank\" rel=\"noopener\">Android XR AI glasses</a> with Gemini at Google I/O (with Samsung, Gentle Monster, and Warby Parker)."],
   ["Dec 2025", "<i>Google XR</i> rolled out <a href=\"https://blog.google/products-and-platforms/platforms/android/android-show-xr-edition-updates/\" target=\"_blank\" rel=\"noopener\">Likeness</a> (photorealistic 3D digital avatars) following the launch of <a href=\"https://blog.google/products-and-platforms/platforms/android/samsung-galaxy-xr/\" target=\"_blank\" rel=\"noopener\">Samsung Galaxy XR</a>."],
   ["Dec 2024", "Joined <i>Google XR</i> (Syntec team, <a href=\"https://thabobeeler.com/\" target=\"_blank\" rel=\"noopener\">Thabo Beeler</a>'s group) as a Research Scientist, leveraging multi-modal generative models to synthesize the world in 3D."],
-  ["Dec 2024", "Defended my <a href=\"https://search.proquest.com/openview/d89381ffeb1ebf77b77cba2af181a40e/1?pq-origsite=gscholar&amp;cbl=18750&amp;diss=y\" target=\"_blank\" rel=\"noopener\">PhD thesis</a> at Northeastern University, advised by <a href=\"https://coe.northeastern.edu/faculty/octavia-camps/\" target=\"_blank\" rel=\"noopener\">Octavia Camps</a>."],
+  ["Dec 2024", "Defended my <a href=\"https://search.proquest.com/openview/d89381ffeb1ebf77b77cba2af181a40e/1?pq-origsite=gscholar&amp;cbl=18750&amp;diss=y\" target=\"_blank\" rel=\"noopener\">PhD thesis</a> at Northeastern University, advised by <a href=\"https://coe.northeastern.edu/people/camps-octavia/\" target=\"_blank\" rel=\"noopener\">Octavia Camps</a>."],
   ["Sep 2024", "<i><a href=\"https://syntec-research.github.io/MagicMirror/\" target=\"_blank\" rel=\"noopener\">MagicMirror</a></i> presented at ECCV 2024, from my Google XR internship."],
   ["2023",     "Co-led an animated AI avatar for Residente's album release."],
   ["Jul 2023", "Oral at ICML 2023 for <i><a href=\"https://energy-based-model.github.io/interaction-potentials\" target=\"_blank\" rel=\"noopener\">Inferring Relational Potentials</a></i>, with <a href=\"https://executive.mit.edu/faculty/joshua-tenenbaum-0036g00000ra8RsAAI.html\" target=\"_blank\" rel=\"noopener\">Joshua Tenenbaum</a> and <a href=\"https://yilundu.github.io/\" target=\"_blank\" rel=\"noopener\">Yilun Du</a> (MIT CoCoSci)."],
@@ -138,7 +138,7 @@ const CV = [
   ["2022",      "Adobe (Project Indigo)", 'Research intern · <a href="https://profiles.stanford.edu/marc-levoy" target="_blank" rel="noopener">Mark Levoy</a>\'s team', 2022.38],
   ["2021",      "Netflix", 'Research intern · with <a href="https://www.linkedin.com/in/mhtaghavi" target="_blank" rel="noopener">Hossein Taghavi</a> · multimodal self-supervision', 2021.38],
   ["2020",      "MERL", 'Research intern · with <a href="https://www.merl.com/people/tmarks" target="_blank" rel="noopener">Tim Marks</a> · <a href="https://doi.org/10.1109/ICIP42928.2021.9506663" target="_blank" rel="noopener">TURNIP (ICIP \'21) ↗</a> · <a href="https://ieeexplore.ieee.org/abstract/document/11192311/" target="_blank" rel="noopener">IEEE Access \'25 ↗</a>', 2020.38],
-  ["2019 – 24", "Northeastern University", 'PhD, Computer Vision · <a href="https://coe.northeastern.edu/faculty/octavia-camps/" target="_blank" rel="noopener">Octavia Camps</a>\'s lab · <a href="https://search.proquest.com/openview/d89381ffeb1ebf77b77cba2af181a40e/1?pq-origsite=gscholar&amp;cbl=18750&amp;diss=y" target="_blank" rel="noopener">PhD Thesis ↗</a>', 2019.68],
+  ["2019 – 24", "Northeastern University", 'PhD, Computer Vision · <a href="https://coe.northeastern.edu/people/camps-octavia/" target="_blank" rel="noopener">Octavia Camps</a>\'s lab · <a href="https://search.proquest.com/openview/d89381ffeb1ebf77b77cba2af181a40e/1?pq-origsite=gscholar&amp;cbl=18750&amp;diss=y" target="_blank" rel="noopener">PhD Thesis ↗</a>', 2019.68],
   ["2012 – 19", "UPC Barcelona", 'BSc + MSc, Telecommunications Engineering', 2017.6],
 ];
 
