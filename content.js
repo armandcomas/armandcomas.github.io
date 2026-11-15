@@ -146,6 +146,7 @@ const LINKS = [
   ["Scholar", "https://scholar.google.com/citations?user=KuczusYAAAAJ"],
   ["GitHub", "https://github.com/ArmandCom"],
   ["LinkedIn", "https://www.linkedin.com/in/armandcomas"],
+  ["OpenReview", "https://openreview.net/profile?id=~Armand_Comas1"],
 ];
 const EMAIL = "acomas@google.com";
 
